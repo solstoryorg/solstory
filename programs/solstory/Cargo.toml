@@ -1,0 +1,22 @@
+[package]
+name = "solstory"
+version = "0.1.0"
+description = "Append only history for solana NFTs, compatible with Metaplex."
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "solstory"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+arraystring = "^0.3.0"
+anchor-lang = "^0.20.0"
+solana-program = "^1.9.2"
+borsh = "^0.9"
+metaplex-token-metadata = {git= "https://github.com/metaplex-foundation/metaplex", tag="v1.0.0", features = [ "no-entrypoint" ] }
