@@ -68,15 +68,17 @@ pub struct Writer {
     pub url: String, // 192
     pub logo: String, // 192
     pub cdn: String, // 192, //semi static
-    //functional
-
-    pub uri: String, //192
-    pub hash: [u8; 16], // 128 bit u8 vector (so u8 *16 bytes // Constructed of h(h(data)+prev_hash)
-    pub prev_hash: [u8; 16],
     pub metadata: String, //use this for whateever
 
     //TODO: Determine metadata PDA standard
-    pub metadata_extended: bool // suggests the existence of a an additional metadata pda.
+    pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.
+
+
+    //functional
+    pub uri: String, //192
+    pub hash: [u8; 16], // 128 bit u8 vector (so u8 *16 bytes // Constructed of h(h(data)+prev_hash)
+    pub prev_hash: [u8; 16],
+
 }
 
 

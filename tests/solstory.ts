@@ -8,6 +8,7 @@ import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { airdrop, LOCALHOST } from '@metaplex-foundation/amman';
 import { sinon } from 'sinon';
 import { mockAxios200 } from './utils/mockMetaplex';
+import { step, xstep } from 'mocha-steps';
 
 
 
@@ -54,7 +55,6 @@ describe('solstory', () => {
     await airdrop(connection, nftOwnerKey.publicKey, 3);
     await airdrop(connection, nftOwner2Key.publicKey, 3);
     await airdrop(connection, eveWallet.publicKey, 3);
-    console.log("finished befores");
 
     //mint an nft for us to create a writer for
     const mintNFTArgs: actions.MintNFTParams = {
@@ -71,11 +71,11 @@ describe('solstory', () => {
     mintNFTArgs.wallet = nftOwner2Wallet
     const mint2Resp = await actions.mintNFT(mintNFTArgs);
     mint2 = mint2Resp.mint;
+    console.log("finished befores");
 
   });
 
   it('Is initialized!', async function() {
-    console.log("Begin first");
     // Add your test here.
     const [_pda, _nonce] = await PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory_pda"))],
@@ -92,7 +92,7 @@ describe('solstory', () => {
     },
     signers:[program.provider.wallet.payer]
     });
-    console.log("Your transaction signature", tx);
+    // console.log("Your transaction signature", tx);
     return tx;
   });
 
@@ -106,7 +106,6 @@ describe('solstory', () => {
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
-    console.log(_writerPda.toBase58())
 
     const writerPda = _writerPda;
     const metaplex_pda = await Metadata.getPDA(mint);
@@ -125,6 +124,7 @@ describe('solstory', () => {
       url: "www.example.com",
       logo: "www.example.com",
       cdn: "",
+      metadata: "",
     },
     {
       accounts: acts,
@@ -132,7 +132,7 @@ describe('solstory', () => {
 
     }
     );
-    console.dir(tx);
+    // console.dir(tx);
     return tx;
 
 
@@ -148,7 +148,6 @@ describe('solstory', () => {
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
-    console.log(_writerPda.toBase58())
 
     const writerPda = _writerPda;
     const metaplex_pda = await Metadata.getPDA(mint2);
@@ -167,6 +166,7 @@ describe('solstory', () => {
       url: "www.example.com",
       logo: "www.example.com",
       cdn: "",
+      metadata: "",
     },
     {
       accounts: acts,
@@ -174,8 +174,160 @@ describe('solstory', () => {
 
     }
     );
+    // console.dir(tx);
+    //TODO: get this to check for 0x32ca
     return tx.should.be.rejected;
+  });
+
+  it('Fails to lie about the owner program', async function () {
+    //requires...
+    //I create a metaplex mint
+    //hmmmm
+    //gotta figure out how to do that in JYES
+    const [_writerPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const writerPda = _writerPda;
+    const metaplex_pda = await Metadata.getPDA(mint2);
+    const acts = {
+        writerProgram: eveWallet.publicKey,
+        ownerProgram: writerWallet.publicKey,
+        tokenMint: mint2,
+        writerPda: writerPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        metaplexMetadataPda: metaplex_pda,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+
+    const tx = program.rpc.createWriterOwner({
+      label: "Writer's Log By Owner",
+      url: "www.example.com",
+      logo: "www.example.com",
+      cdn: "",
+      metadata: "",
+    },
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    // console.dir(tx);
+    return tx.should.be.rejected;
+  });
+
+  it('Succeeds in creating a writer as the not-owner', async function () {
+    const [_writerPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const writerPda = _writerPda;
+    const metaplex_pda = await Metadata.getPDA(mint2);
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        ownerProgram: nftOwner2Wallet.publicKey,
+        tokenMint: mint2,
+        writerPda: writerPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        metaplexMetadataPda: metaplex_pda,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+
+    const tx = program.rpc.createWriterWriter({
+      label: "Writer's Log By Owner",
+      url: "www.example.com",
+      logo: "www.example.com",
+      cdn: "",
+      metadata: "",
+    },
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    // console.dir(tx);
+    return tx;
+  });
+
+  describe('writer test flow', function() {
+    step('Able to authorize a writer', async function () {
+      const [_writerPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+
+      const writerPda = _writerPda;
+      const metaplex_pda = await Metadata.getPDA(mint2);
+      const acts = {
+          writerProgram: writerWallet.publicKey,
+          ownerProgram: nftOwner2Wallet.publicKey,
+          tokenMint: mint2,
+          writerPda: writerPda,
+          metaplexMetadataPda: metaplex_pda,
+        }
+
+      const tx = program.rpc.authorizeWriter(
+      {
+        accounts: acts,
+        signers: [nftOwner2Wallet.payer]
+      }
+      );
+      return tx.then(function (tx) {
+        // get the pda and verify it's authorized
+        console.dir(tx);
+        return program.account.writer.fetch(writerPda)
+
+      }).then((wp)=>{
+        console.log("wp auth", wp.authorized);
+        return wp.authorized
+      }).should.eventually.equal(true);
+
+    });
+
+    step('Able to deauthorize a writer', async function () {
+      const [_writerPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+
+      const writerPda = _writerPda;
+      const metaplex_pda = await Metadata.getPDA(mint2);
+      const acts = {
+          writerProgram: writerWallet.publicKey,
+          ownerProgram: nftOwner2Wallet.publicKey,
+          tokenMint: mint2,
+          writerPda: writerPda,
+          metaplexMetadataPda: metaplex_pda,
+        }
+
+      const tx = program.rpc.deauthorizeWriter(
+      {
+        accounts: acts,
+        signers: [nftOwner2Wallet.payer]
+      }
+      );
+      return tx.then(function (tx) {
+        // get the pda and verify it's authorized
+
+        console.dir(tx);
+        return program.account.writer.fetch(writerPda)
+
+      }).then((wp)=>{console.log("wp auth", wp.authorized); return wp.authorized}).should.eventually.be.false;
+
+    });
+  });
+
+  it('Able to deauthorize a writer', async function () {
+
+  });
 
 
-  })
 });
