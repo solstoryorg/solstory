@@ -11,7 +11,7 @@ pub const WRITER_ACCOUNT_LEN:usize = 8 +
 1 + //authorized
 128 + //label
 (192 * 4) + // url, logo, cdn, uri
-16*2 + // the two hashes
+32*2 + // the two hashes
 280 + //Tweet length metadata
 1; //Extended metadata
 
@@ -53,33 +53,65 @@ pub struct SolstoryPDA {
     pub writers: i32,
 }
 
+#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
+pub enum AccessType {
+    ArDrive,
+    URL,
+    PDA,
+}
+
+impl Default for AccessType {
+    fn default() -> Self { AccessType::URL }
+}
+
 //only writer-program can modify
 //this is a writer attached to a particular single instance nft (mint)
-// pda('solstory' solstory prog, mintid, writer_program)
+// pda('solstory' solstory prog, writer_program)
 #[account]
 #[derive(Default)]
-pub struct Writer {
+pub struct WriterMetadata {
     //for NFT owner
     // This can be a program _or_ an authorizing key.
     pub writer_key: Pubkey, //this is used for the memcpy search
-    pub authorized: bool,
+    pub visible: bool,
+    pub access_type: AccessType,
+
+
     //for writer, semi-static
     pub label: String, // 128
     pub url: String, // 192
     pub logo: String, // 192
     pub cdn: String, // 192, //semi static
     pub metadata: String, //use this for whateever
+    pub base_url: String, //192 only meaningful in cases where AccessType=URL
 
     //TODO: Determine metadata PDA standard
     pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.
+}
 
+//only writer-program can modify
+//this is a writer attached to a particular single instance nft (mint)
+// pda('solstory' solstory prog, mintid, writer_program)
+#[account]
+#[derive(Default)]
+pub struct WriterHead {
+    //for NFT owner
+    // This can be a program _or_ an authorizing key.
+    pub writer_key: Pubkey, //this is used for the memcpy search
+    pub invalidated: bool, //trigger from nft mod privileges to deauthorize specific chains
+    pub authorized: bool,
+    pub visible_override: bool, //TODO: possibly cut this, metadata has it
 
-    //functional
-    pub uri: String, //192
-    pub hash: [u8; 16], // 128 bit u8 vector (so u8 *16 bytes // Constructed of h(h(data)+prev_hash)
-    pub prev_hash: [u8; 16],
+    //if we hard use cdn or ARdrive
+    pub uuid: [u8; 16],
+    pub data_hash: [u8; 32], // 256 bit u8 vector (so u8 *32 bytes //
+    pub prev_hash: [u8; 32], // Constructed of h(h(prev_data)+prev_hash+h(prev_timestamp))
+    pub timestamp: i64, // for data integrety we don't use solana_program::UnixTimestamp but convert it
+                        // to its underlying type
 
 }
+
+
 
 
 

@@ -17,15 +17,40 @@ import { Keypair } from '@solana/web3.js';
 import axios, { AxiosResponse } from 'axios';
 import { airdrop, LOCALHOST } from '@metaplex-foundation/amman';
 
-import { Connection, NodeWallet, Wallet } from '@metaplex/js';
+import { Connection, NodeWallet, actions, Wallet } from '@metaplex/js';
 
 import * as sinon from 'sinon';
 
+const NEEDED_NFTS = 4;
 
-export const uri =
+var initialized = false;
+var queue = []
+
+
+const getWallet = async () => {
+  if(!initialized) {
+    await initialize();
+  }
+  let item = queue.shift();
+  return item;
+}
+
+const initialize = async () => {
+  const promises = []
+  const connection = new Connection(LOCALHOST, 'confirmed');
+  for (let i=0;i<NEEDED_NFTS;i++){
+    promises.push(generateWallet(connection))
+  }
+  initialized = true;
+  mockAxios200(queue.map((i)=>{return i[0]}));
+  return Promise.all(promises);
+
+}
+
+const uri =
   'https://bafkreibj4hjlhf3ehpugvfy6bzhhu2c7frvyhrykjqmoocsvdw24omfqga.ipfs.dweb.link';
 
-export const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = undefined) => {
+const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = undefined) => {
   const mockedResponse = {
     data: {
       name: 'Holo Design (0)',
@@ -60,11 +85,13 @@ export const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined
 };
 
 
-export const generateConnectionAndWallet = async () => {
+const generateWallet = async (connection) => {
   const payer = Keypair.generate();
-  const connection = new Connection(LOCALHOST, 'confirmed');
-  await airdrop(connection, payer.publicKey, 10);
   const wallet = new NodeWallet(payer);
 
-  return { connection, wallet, payer };
+  queue.push([wallet, payer]);
+  return airdrop(connection, payer.publicKey, 3);
+
+
 };
+export {getWallet, generateWallet}

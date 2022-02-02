@@ -1,9 +1,19 @@
 {
+    "name": "test-project",
+    "version": "1.0.0",
+    "description": "SolStory API",
+    "main": "src/main.js",
+    "private": true,
+    "scripts": {
+        "test": "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts",
+        "build": "tsc"
+    },
     "dependencies": {
         "@metaplex-foundation/amman": "^0.0.9",
         "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
         "@metaplex/js": "^4.11.7",
         "@project-serum/anchor": "^0.18.0",
+        "crypto": "^1.0.1",
         "sinon": "^12.0.1",
         "ts-jest": "^27.1.3"
     },

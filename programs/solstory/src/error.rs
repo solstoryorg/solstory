@@ -7,6 +7,8 @@ pub enum SolstoryError {
     AccountExists = 7001,
     #[msg("Stated owner does not have update privileges on the given metadata")]
     InvalidOwnerError = 7002,
-    #[msg("second error")]
-    SecondError,
+    #[msg("Incorrect Hashcode")]
+    HashMismatchError = 7003,
+    #[msg("TimestampOutOfRange")]
+    TimestampRangeError = 7004,
 }
