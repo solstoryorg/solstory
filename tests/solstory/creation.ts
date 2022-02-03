@@ -29,7 +29,6 @@ describe('solstory', () => {
   const connection = new Connection(LOCALHOST, 'confirmed');
 
   //pubkey for the writer program!
-  console.log("trying wallets");
   const writerKey = Keypair.generate()
   const writerWallet = new NodeWallet(writerKey);
   //pubkey for an NFT program
@@ -44,13 +43,12 @@ describe('solstory', () => {
 
   // Configure the client to use the local cluster.
   before(async () => {
-    console.log("airdop2");
     await airdrop(connection, writerKey.publicKey, 3);
     await airdrop(connection, eveWallet.publicKey, 3);
     nftOwnerWallet = (await getWallet())[0];
     //pubkey for an NFT program
     nftOwner2Wallet = (await getWallet())[0];
-    console.log("got wallets", nftOwnerWallet.publicKey,);
+    console.log("creation wallets", nftOwnerWallet.publicKey, nftOwner2Wallet.publicKey);
 
 
     //mint an nft for us to create a writer for
@@ -68,7 +66,6 @@ describe('solstory', () => {
     const mint2Resp = await actions.mintNFT(mintNFTArgs);
     mint2 = mint2Resp.mint;
 
-    console.log("finished befores");
 
   });
 
@@ -299,14 +296,12 @@ describe('solstory', () => {
         signers: [nftOwner2Wallet.payer]
       }
       );
-      return tx.then(function (tx) {
+      return tx.then((tx) => {
         // get the pda and verify it's authorized
-        console.dir(tx);
         return program.account.writerHead.fetch(writerHeadPda)
 
-      }).then((wp)=>{
-        console.log("wp auth", wp.authorized);
-        return wp.authorized
+      }).then((wh) => {
+        return wh.authorized
       }).should.eventually.equal(true);
 
     });
@@ -337,7 +332,6 @@ describe('solstory', () => {
       return tx.then(function (tx) {
         // get the pda and verify it's authorized
 
-        console.dir(tx);
         return program.account.writerHead.fetch(writerHeadPda)
 
       }).then((wp)=>{console.log("wp auth", wp.authorized); return wp.authorized}).should.eventually.be.false;

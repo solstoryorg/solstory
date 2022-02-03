@@ -89,8 +89,23 @@ pub struct WriterMetadata {
     pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.
 }
 
-//only writer-program can modify
-//this is a writer attached to a particular single instance nft (mint)
+/*
+ * In theory we can just put this in the spec and then
+ * allow wallets to hard override in local _but_ we want to make things
+ * as on chain as possible and this is relatively cheap for us to implement.
+ */
+#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
+pub enum HolderOverride {
+    Default,
+    Visible,
+    Hidden,
+}
+
+impl Default for HolderOverride {
+    fn default() -> Self { HolderOverride::Default }
+}
+// only writer-program can modify
+// this is a writer attached to a particular single instance nft (mint)
 // pda('solstory' solstory prog, mintid, writer_program)
 #[account]
 #[derive(Default)]
@@ -98,22 +113,13 @@ pub struct WriterHead {
     //for NFT owner
     // This can be a program _or_ an authorizing key.
     pub writer_key: Pubkey, //this is used for the memcpy search
-    pub invalidated: bool, //trigger from nft mod privileges to deauthorize specific chains
     pub authorized: bool,
-    pub visible_override: bool, //TODO: possibly cut this, metadata has it
+    pub visible_override: HolderOverride, //Allow the holder of the NFT to hard-override things.
 
     //if we hard use cdn or ARdrive
     pub uuid: [u8; 16],
-    pub data_hash: [u8; 32], // 256 bit u8 vector (so u8 *32 bytes //
-    pub prev_hash: [u8; 32], // Constructed of h(h(prev_data)+prev_hash+h(prev_timestamp))
-    pub timestamp: i64, // for data integrety we don't use solana_program::UnixTimestamp but convert it
-                        // to its underlying type
-
+    pub current_hash: [u8; 32],
 }
-
-
-
-
 
 // This entire section pulled from
 // https://docs.rs/anchor-lang/0.20.0/anchor_lang/accounts/account/struct.Account.html#impl-Accounts%3C%27info%3E

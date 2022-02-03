@@ -10,6 +10,8 @@ import { getWallet } from '../utils/mockMetaplex';
 import { step, xstep } from 'mocha-steps';
 import * as crypto from 'crypto';
 
+import { timestampToBytes, solstoryHash } from '../../src/utils/index';
+
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
 
@@ -42,10 +44,10 @@ describe('solstory hashlist test', async () => {
   describe("inner loop to try and keep it from all stopping?", () => {
     // Configure the client to use the local cluster.
     before(async () => {
-      console.log('air1', await airdrop(connection, writerKey.publicKey, 3));
-      console.log('air2', await airdrop(connection, eveKey.publicKey, 3));
+      console.log('hashlist1', await airdrop(connection, writerKey.publicKey, 3));
+      console.log('hashlist 2', await airdrop(connection, eveKey.publicKey, 3));
       const nftOwnerWallet = (await getWallet())[0];
-      console.log('nft walllettt', nftOwnerWallet);
+      console.log('hashlist NFT wallet', nftOwnerWallet.publicKey);
 
 
       const mintNFTArgs: actions.MintNFTParams = {
@@ -57,7 +59,7 @@ describe('solstory hashlist test', async () => {
 
       const mintResp = await actions.mintNFT(mintNFTArgs);
       mint = mintResp.mint;
-      console.log("miiint", mint);
+      console.log("hashlist NFT mint", mint);
 
 
       const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
@@ -75,7 +77,6 @@ describe('solstory hashlist test', async () => {
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         }
 
-      console.log("sending creation tx");
       return program.rpc.createWriterMetadata(
         {
           label: "creation metadata",
@@ -89,10 +90,9 @@ describe('solstory hashlist test', async () => {
         signers: [writerWallet.payer]
 
       }).then((tx)=>{
-      console.log("hashlist test account creation", tx);
+      console.log("hashlist test writermeta creation", tx);
       }).then(async () =>{
 
-        console.log('mint is', mint);
       const [_writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
@@ -100,7 +100,7 @@ describe('solstory hashlist test', async () => {
       ); //TODO: library function for this
 
       const metaplex_pda = await Metadata.getPDA(mint);
-      const writerHeadPda = _writerMetadataPda;
+      const writerHeadPda = _writerHeadPda;
       const acts2 = {
           writerProgram: writerWallet.publicKey,
           ownerProgram: nftOwnerWallet.publicKey,
@@ -112,14 +112,13 @@ describe('solstory hashlist test', async () => {
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         }
 
-      console.log("sending creation tx");
       return program.rpc.createWriterHeadWriter(
       {
         accounts: acts2,
         signers: [writerWallet.payer]
 
       }).then((tx)=>{
-      console.log("hashlist test account creation", tx);
+      console.log("hashlist test writerhead creation", tx);
       });
       });
 
@@ -127,7 +126,7 @@ describe('solstory hashlist test', async () => {
 
   step('appends an initial record', async () => {
     const fakeData = {
-      timestamp:Date.now(),
+      timestamp: new anchor.BN(Date.now()),
       prev_hash:"",
       data: {
 
@@ -142,10 +141,15 @@ describe('solstory hashlist test', async () => {
     const dataHash = dataHasher.digest();
 
 
+    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+    const oldHash = Buffer.from(new Uint8Array(32).fill(0));
+    const newHash = solstoryHash(timestamp, dataHash, oldHash);
+
     const data = {
-      timestamp: new anchor.BN(Date.now()),
-      data_hash: dataHash,
-      prev_hash: Buffer.from(""),
+      timestamp: timestamp,
+      dataHash: dataHash,
+      prevHash: oldHash,
+      newHash: newHash,
     }
 
     const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
@@ -165,15 +169,70 @@ describe('solstory hashlist test', async () => {
        accounts: acts,
        signers: [writerWallet.payer],
      });
-    return tx;
+    return tx.then((tx) => {
+      return program.account.writerHead.fetch(writerHeadPda)
+    }).then((wh) => {
+      console.dir(wh);
+      return wh.currentHash == newHash;
+    });
   });
 
-  step('appends a subsequent record', () => {
 
+  step('appends a subsequent record', async () => {
+    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+    const writerHeadPda = _writerHeadPda;
+
+    const fakeData = {
+      data: 'more fake data',
+    }
+
+    const dataContent = JSON.stringify(fakeData.data);
+
+    const dataHasher = crypto.createHash('sha256');
+    dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+    const dataHash = dataHasher.digest();
+    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+
+    return program.account.writerHead.fetch(writerHeadPda).
+      then((wh) => {
+
+        const prevHash = wh.currentHash;
+        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(prevHash));
+
+        const data = {
+          timestamp: timestamp,
+          dataHash: dataHash,
+          prevHash: Buffer.from(prevHash),
+          newHash: newHash,
+        }
+
+        const acts = {
+            writerProgram: writerWallet.publicKey,
+            tokenMint: mint,
+            writerHeadPda: writerHeadPda,
+          };
+        const tx = program.rpc.extAppend(data,
+         {
+           accounts: acts,
+           signers: [writerWallet.payer],
+         });
+        return tx.then((tx) => {
+          return program.account.writerHead.fetch(writerHeadPda)
+        }).then((wh) => {
+          console.dir(wh);
+          return wh.currentHash == newHash;
+        });
+      });
   });
 
 
+
   });
+
 
 });
 

@@ -25,16 +25,14 @@ const should = chai.should();
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('testing hashing capabilities', () => {
+describe('testing basic hashing capabilities', () => {
   it('correctly goes from timestamp to hash', () =>{
     const testInt = 323212;
 
-    const bytes = timestampToBytes(testInt);
     const timestampBytes = timestampToBytes(testInt);
 
     const timeHash = crypto.createHash('sha256');
     timeHash.update(timestampBytes);
-    const timestampHash = Uint8Array.from(timeHash.digest())
     const correctBytes = Uint8Array.from([ 0, 0, 0, 0, 0, 4, 238, 140])
 
     return timestampBytes.should.be.deep.equal(correctBytes);
@@ -63,13 +61,13 @@ describe('testing hashing capabilities', () => {
   it('create a correct hash for a record', () => {
     //this doesn't really test the code but verifies our hashing function approach works
 
-    const timestamp = 323212;
+    const timestamp = new anchor.BN(323212);
 
 
-    const data_hash = Uint8Array.from(Buffer.from('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52','hex'));
-    const old_hash = Uint8Array.from(Buffer.from('cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4','hex'));
+    const dataHash = Uint8Array.from(Buffer.from('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52','hex'));
+    const oldHash = Uint8Array.from(Buffer.from('cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4','hex'));
 
-    const newHash = solstoryHash(timestamp, data_hash, old_hash);
+    const newHash = solstoryHash(timestamp, dataHash, oldHash);
 
     const correct = Uint8Array.from(Buffer.from('3ee1766d4fe6690d33fc9c60df1ad3e7d9da5f5916c2a3f6aa0ef6ce94ae990a','hex'));
 

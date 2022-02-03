@@ -10,7 +10,14 @@ use crate::error::SolstoryError;
 
 declare_id!("H3iPPJ6td4XPAVmBsygE8NxjnmAgeafPktr59JiV4jAv");
 
-const TIMESTAMP_ACCEPTABLE_VARIANCE:i64 = 120_i64;
+/*
+ * Currently the clock time in solana is extremely inaccurate,
+ * occassionally varying on the order of days (at least on testnet),
+ * so for now timestamp should be not be seen as an enforced constraint.
+ * With current blockchain limitations we can only make strong guarantees
+ * about ordering.
+ */
+const TIMESTAMP_ACCEPTABLE_VARIANCE:i64 = 604800_i64;
 
 #[program]
 pub mod solstory {
@@ -54,6 +61,12 @@ pub mod solstory {
     /// this program can be called by either the writer program
     /// or the update authority (creator of the NFT)
     /// THIS DOES NOT GUARD AGAINST ANY SORT OF INJECTION INPUT
+    /*
+     * Create Writer Head
+     * Here we create the head of the hashlist. Two almost identical functions,
+     * but
+     *
+     */
     pub fn create_writer_head_writer(ctx: Context<CreateWriterHeadWriter>) -> ProgramResult {
 
         /*
@@ -73,11 +86,11 @@ pub mod solstory {
          */
         (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = false;
-        (*ctx.accounts.writer_head_pda).visible_override = false;
+        (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
         // (*ctx.accounts.writer_pda).uri =  String::new();
-        (*ctx.accounts.writer_head_pda).data_hash =  [0; 32];
-        (*ctx.accounts.writer_head_pda).prev_hash =  [0; 32];
+        (*ctx.accounts.writer_head_pda).uuid =  [0; 16];
+        (*ctx.accounts.writer_head_pda).current_hash =  [0; 32];
 
         Ok(())
     }
@@ -99,7 +112,7 @@ pub mod solstory {
          * TODO: metaplex metadata is for the token mint
          */
 
-        if((*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key)) {
+        if (*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key) {
             return Err(SolstoryError::InvalidOwnerError.into())
         }
 
@@ -107,12 +120,10 @@ pub mod solstory {
 
         (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = true;
-        (*ctx.accounts.writer_head_pda).visible_override = false;
+        (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
-        // (*ctx.accounts.writer_pda).uri =  String::new();
-        (*ctx.accounts.writer_head_pda).data_hash =  [0; 32];
-        (*ctx.accounts.writer_head_pda).prev_hash =  [0; 32];
-        (*ctx.accounts.writer_head_pda).timestamp =  Clock::get()?.unix_timestamp;
+        (*ctx.accounts.writer_head_pda).uuid = [0; 16];
+        (*ctx.accounts.writer_head_pda).current_hash = [0; 32];
 
         Ok(())
     }
@@ -199,11 +210,6 @@ pub mod solstory {
 
 
     pub fn ext_append(ctx: Context<ExtAppend>, data: ExtAppendData) -> ProgramResult {
-    // pub timestamp: i64,         // timestamp of block
-    // pub data_hash: [u8; 32],    // hash of block data
-    // pub prev_hash: [u8; 32],    // hash of the last blocks timestamp, data, and prev_hash
-    // pub uri: String,            // uri of current block - preferably in permanent storage
-
         /*
          * The following things are validated by Anchor
          *  writer program is a signer
@@ -218,23 +224,28 @@ pub mod solstory {
          * the timestamp is within a range of current time
          */
 
-        let hash = hash_from_prev((*ctx.accounts.writer_head_pda).timestamp, ctx.accounts.writer_head_pda.data_hash, ctx.accounts.writer_head_pda.prev_hash);
-
-        if hash != data.prev_hash {
+        let hash = hash_from_prev(data.timestamp, data.data_hash, data.prev_hash);
+        msg!("hash: {:?}", hash);
+        if hash != data.new_hash {
             return Err(SolstoryError::HashMismatchError.into())
         }
 
         let cur_time:i64 = (Clock::get()?).unix_timestamp;
+        msg!("current time: {:?}", cur_time);
+        msg!("timestamp time: {:?}", data.timestamp);
 
-        if ((*ctx.accounts.writer_head_pda).timestamp-cur_time).abs() > TIMESTAMP_ACCEPTABLE_VARIANCE {
+        // As mentioned above, this should be treated as a santiy check more than anything
+        if (data.timestamp-cur_time).abs() > TIMESTAMP_ACCEPTABLE_VARIANCE {
             return Err(SolstoryError::TimestampRangeError.into())
         }
 
-        // (*ctx.accounts.writer_head_pda).uri =  data.uri;
-        (*ctx.accounts.writer_head_pda).data_hash =  data.data_hash;
-        (*ctx.accounts.writer_head_pda).prev_hash =  hash;
-        (*ctx.accounts.writer_head_pda).timestamp =  data.timestamp;
+        if data.prev_hash != (*ctx.accounts.writer_head_pda).current_hash {
+            return Err(SolstoryError::HashMismatchError.into())
+        }
 
+
+        // (*ctx.accounts.writer_head_pda).uri =  data.uri;
+        (*ctx.accounts.writer_head_pda).current_hash =  hash;
 
 
         Ok(())
@@ -263,18 +274,6 @@ pub struct CreateWriterMetadata<'info> {
     #[account(init, payer=writer_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", writer_program.key().as_ref()], bump)]
     writer_metadata_pda: Account<'info, WriterMetadata>,
     system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct CreateWriterMetadataOwner<'info> {
-    #[account(mut, signer)]
-    owner_program: AccountInfo<'info>,
-    #[account()]
-    writer_program: AccountInfo<'info>,
-    #[account(init, payer=writer_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", writer_program.key().as_ref()], bump)]
-    writer_metadata_pda: Account<'info, WriterMetadata>,
-    system_program: Program<'info, System>,
-    metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
 }
 
 #[derive(Accounts)]
@@ -363,6 +362,7 @@ pub struct ExtAppendData {
     pub timestamp: i64,         // timestamp of block
     pub data_hash: [u8; 32],    // hash of block data
     pub prev_hash: [u8; 32],    // hash of the last blocks timestamp, data, and prev_hash
+    pub new_hash: [u8; 32],     // verification step for safety
     // pub uri: String,            // uri of current block - preferably in permanent storage
 }
 
