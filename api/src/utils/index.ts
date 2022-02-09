@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as anchor from '@project-serum/anchor';
 /* Hash function */
 
-export const timestampToBytes = (timestamp) => {
+export const timestampToBytes = (timestamp:any) => {
     const byteTime = new Uint8Array(8);
     for (let i=0; i<8;i++) {
         // byteTime[i] = (timestamp >> i*8) % 256;

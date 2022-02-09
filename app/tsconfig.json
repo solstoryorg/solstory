@@ -2,18 +2,12 @@
   "compilerOptions": {
     "types": ["mocha", "chai"],
     "typeRoots": ["./node_modules/@types"],
-    "lib": ["es2020"],
+    "lib": ["es2020", "dom"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "module": "commonjs",
     "target": "es2020",
     "esModuleInterop": true
   },
-  "references": [
-    {
-      "path": "./api/tsconfig.ref.json"
-    },
-    {
-      "path": "./app/tsconfig.ref.json"
-    }
-  ],
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts"]
 }

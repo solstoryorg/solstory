@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/solstory/",
 ]
 
-cargo-features = ["edition2021"]
