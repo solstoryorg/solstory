@@ -10,7 +10,7 @@ import { getWallet } from '../utils/mockMetaplex';
 import { step, xstep } from 'mocha-steps';
 import * as crypto from 'crypto';
 
-import { timestampToBytes, solstoryHash } from '../../src/utils/index';
+import { timestampToBytes, solstoryHash } from '../../api/src/utils/index';
 
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
@@ -30,11 +30,11 @@ describe('solstory hashlist test', async () => {
 
 
   //pubkey for the writer program!
-  const writerKey = Keypair.generate()
+  const writerKey = Keypair.fromSeed(Uint8Array.from('00200000000044440000000000000001'))
   const writerWallet = new NodeWallet(writerKey);
 
   //pubkey for a malicious user
-  const eveKey = Keypair.generate();
+  const eveKey = Keypair.fromSeed(Uint8Array.from('00200000000044440000000000000002'))
   const eveWallet = new NodeWallet(eveKey);
 
 
@@ -46,7 +46,7 @@ describe('solstory hashlist test', async () => {
     before(async () => {
       console.log('hashlist1', await airdrop(connection, writerKey.publicKey, 3));
       console.log('hashlist 2', await airdrop(connection, eveKey.publicKey, 3));
-      const nftOwnerWallet = (await getWallet())[0];
+      const nftOwnerWallet = (await getWallet('hashlist'))[0];
       console.log('hashlist NFT wallet', nftOwnerWallet.publicKey);
 
 
@@ -172,7 +172,6 @@ describe('solstory hashlist test', async () => {
     return tx.then((tx) => {
       return program.account.writerHead.fetch(writerHeadPda)
     }).then((wh) => {
-      console.dir(wh);
       return wh.currentHash == newHash;
     });
   });
@@ -223,7 +222,6 @@ describe('solstory hashlist test', async () => {
         return tx.then((tx) => {
           return program.account.writerHead.fetch(writerHeadPda)
         }).then((wh) => {
-          console.dir(wh);
           return wh.currentHash == newHash;
         });
       });

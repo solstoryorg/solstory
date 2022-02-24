@@ -4,6 +4,8 @@ use arraystring::{ArrayString, typenum::U192, typenum::U255};
 use metaplex_token_metadata::state::{Metadata, Key, MAX_METADATA_LEN};
 use std::ops::Deref;
 
+use crate::error::SolstoryError;
+
 // pub const METAPLEX_METADATA_ID:Pubkey = metaplex_token_metadata::id();
 pub const METAPLEX_METADATA_ID:Pubkey = solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 pub const WRITER_ACCOUNT_LEN:usize = 8 +
@@ -110,9 +112,17 @@ impl Default for HolderOverride {
 #[account]
 #[derive(Default)]
 pub struct WriterHead {
-    //for NFT owner
-    // This can be a program _or_ an authorizing key.
-    pub writer_key: Pubkey, //this is used for the memcpy search
+    // We make a deliberate choice here: we can save 64 bytes by removing the ability
+    // to programatically load all heads of a program and by finding every head of
+    // an NFT by iterating through every single program via getMultipleAccounts
+    //
+    // Even up to 10^3 writer programs, I'd rather send 10x more requests (10x 100 acts per
+    // request vs a single prog-accts-filter-on-buffer) than increase cost of storage by 50%.
+    //
+    // Incidentally: CDN based workflow solves for this!
+    // pub writer_key: Pubkey, //this is used for the memcpy search
+    // pub nft_key: Pubkey, //this is used for the memcpy search
+
     pub authorized: bool,
     pub visible_override: HolderOverride, //Allow the holder of the NFT to hard-override things.
 
@@ -135,10 +145,15 @@ impl MetaplexMetadata {
 
 
 impl anchor_lang::AccountDeserialize for MetaplexMetadata{
-    fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, ProgramError>{
+    fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self>{
         // create an Ok(metadata) object that we map MetaplexMetadata TO
         // thereby creating a MetaplexMetadata tuple with Metadata in it.
-        metaplex_token_metadata::utils::try_from_slice_checked(&buf, Key::MetadataV1, MAX_METADATA_LEN).map(MetaplexMetadata)
+        let out = metaplex_token_metadata::utils::try_from_slice_checked(&buf, Key::MetadataV1, MAX_METADATA_LEN).map(MetaplexMetadata);
+        match out {
+            Ok(out) => Ok(out),
+            Err(out) => Err(error!(SolstoryError::MetaplexDeserializeError))
+        }
+
     }
 }
 

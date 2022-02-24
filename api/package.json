@@ -3,21 +3,23 @@
     "version": "0.0.1",
     "type": "module",
     "description": "SolStory API",
-    "main": "src/index.js",
-    "private": true,
+    "private": false,
+    "main": "dist/index.js",
     "exports": {
-        "./client/*": "./dist/api/*.js"
+        ".": "./dist/index.js"
     },
     "typesVersions": {
         "*": {
-            "client/*": [
-                "dist/client/*"
+            "/*": [
+                "dist/*"
             ]
         }
     },
     "scripts": {
         "test": "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts",
-        "build": "tsc"
+        "pre-build": "cp ../target/idl/solstory.json src/programs/solstory.json",
+        "build": "yarn run pre-build; tsc",
+        "watch": "yarn run pre-build; tsc --watch"
     },
     "dependencies": {
         "@emotion/react": "^11.7.1",
@@ -26,8 +28,9 @@
         "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
         "@metaplex/js": "^4.11.7",
         "@mui/material": "^5.4.0",
-        "@project-serum/anchor": "^0.18.0",
+        "@project-serum/anchor": "^0.22.0",
         "@types/chai": "^4.3.0",
+        "commonjs": "^0.0.1",
         "crypto": "^1.0.1",
         "sinon": "^12.0.1",
         "ts-jest": "^27.1.3"

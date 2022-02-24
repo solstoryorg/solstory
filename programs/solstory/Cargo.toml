@@ -18,8 +18,8 @@ default = []
 
 [dependencies]
 arraystring = "^0.3.0"
-anchor-lang = "^0.20.0"
-anchor-spl = "^0.20.1"
+anchor-lang = "^0.22.0"
+anchor-spl = "^0.22.0"
 solana-program = "^1.9.2"
 borsh = "^0.9"
 sha2 = "^0.10.1"

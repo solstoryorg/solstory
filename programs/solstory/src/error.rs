@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 // call with         Err(MyError::Hello.into())
-#[error]
+#[error_code]
 pub enum SolstoryError {
     #[msg("This account already exists")] // This might also be other errors, init defaults to 0x0.
     AccountExists = 7001,
@@ -11,4 +11,6 @@ pub enum SolstoryError {
     HashMismatchError = 7003,
     #[msg("TimestampOutOfRange")]
     TimestampRangeError = 7004,
+    #[msg("Metplaex Deserialization Failure")]
+    MetaplexDeserializeError = 7005,
 }

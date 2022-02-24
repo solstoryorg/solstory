@@ -5,9 +5,14 @@
     "lib": ["es2020", "dom"],
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "module": "commonjs",
-    "target": "es2020",
-    "esModuleInterop": true
+    "resolveJsonModule": true,
+    "module": "es6",
+    "moduleResolution": "Node",
+    "target": "es2021",
+    "esModuleInterop": true,
+    "declarationMap": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration":true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.tsx"]
 }

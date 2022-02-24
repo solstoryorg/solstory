@@ -9,7 +9,7 @@ import { airdrop, LOCALHOST } from '@metaplex-foundation/amman';
 import { step, xstep } from 'mocha-steps';
 import * as crypto from 'crypto';
 
-import { timestampToBytes, solstoryHash } from '../../src/utils/index';
+import { timestampToBytes, solstoryHash } from '../../api/src/utils';
 
 
 

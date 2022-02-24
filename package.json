@@ -4,5 +4,9 @@
   "workspaces": [
     "api",
     "app"
-  ]
+  ],
+  "scripts": {
+    "pre-build": "cp target/idl/solstory.json api/src/programs/solstory.json",
+    "tsc-watch": "yarn run pre-build; tsc --watch"
+  }
 }

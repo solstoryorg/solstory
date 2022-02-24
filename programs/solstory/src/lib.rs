@@ -4,6 +4,7 @@ pub mod utils;
 
 use anchor_lang::prelude::*;
 use anchor_spl::token;
+use anchor_spl::token::Mint;
 use crate::utils::*;
 use crate::state::*;
 use crate::error::SolstoryError;
@@ -23,13 +24,13 @@ const TIMESTAMP_ACCEPTABLE_VARIANCE:i64 = 604800_i64;
 pub mod solstory {
     use super::*;
     // This is a function def
-    pub fn initialize(ctx: Context<Initialize>) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()>{
         (*ctx.accounts.solstory_pda).initialized = true;
         (*ctx.accounts.solstory_pda).writers = 0;
         Ok(())
     }
 
-    pub fn create_writer_metadata(ctx: Context<CreateWriterMetadata>, data: WriterMetadataData) -> ProgramResult {
+    pub fn create_writer_metadata(ctx: Context<CreateWriterMetadata>, data: WriterMetadataData) -> Result<()> {
         (*ctx.accounts.writer_metadata_pda).label = data.label;
         (*ctx.accounts.writer_metadata_pda).url =  data.url;
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
@@ -67,7 +68,7 @@ pub mod solstory {
      * but
      *
      */
-    pub fn create_writer_head_writer(ctx: Context<CreateWriterHeadWriter>) -> ProgramResult {
+    pub fn create_writer_head_writer(ctx: Context<CreateWriterHeadWriter>) -> Result<()> {
 
         /*
          * The following things are validated by Anchor.
@@ -84,7 +85,7 @@ pub mod solstory {
          * nothing - anyone is allowed to write to any NFT just not authorize it
          * TODO: the metaplex pda is for the token mint
          */
-        (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
+        // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = false;
         (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
@@ -95,7 +96,7 @@ pub mod solstory {
         Ok(())
     }
     //pub fn update writer
-    pub fn create_writer_head_owner(ctx: Context<CreateWriterHeadOwner>) -> ProgramResult {
+    pub fn create_writer_head_owner(ctx: Context<CreateWriterHeadOwner>) -> Result<()> {
         /*
          * The following things are validated by Anchor.
          *
@@ -118,7 +119,7 @@ pub mod solstory {
 
         // Make changes
 
-        (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
+        // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = true;
         (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
@@ -132,7 +133,7 @@ pub mod solstory {
      * This function allows a writer program to update its own base properties.
      * These include the label, url, logo, and cdn and metadata/extended.
      */
-    pub fn update_writer_metadata(ctx: Context<UpdateWriterMetadata>, data: WriterMetadataData) -> ProgramResult {
+    pub fn update_writer_metadata(ctx: Context<UpdateWriterMetadata>, data: WriterMetadataData) -> Result<()> {
         /*
          * The following things are validated by Anchor.
          *
@@ -163,7 +164,7 @@ pub mod solstory {
         Ok(())
     }
 
-    pub fn authorize_writer(ctx: Context<AuthorizeWriter>) -> ProgramResult {
+    pub fn authorize_writer(ctx: Context<AuthorizeWriter>) -> Result<()> {
         /*
          * The following things are validated by Anchor.
          *
@@ -186,7 +187,7 @@ pub mod solstory {
         Ok(())
     }
 
-    pub fn deauthorize_writer(ctx: Context<DeauthorizeWriter>) -> ProgramResult {
+    pub fn deauthorize_writer(ctx: Context<DeauthorizeWriter>) -> Result<()> {
         /*
          * The following things are validated by Anchor.
          *
@@ -209,7 +210,7 @@ pub mod solstory {
     }
 
 
-    pub fn ext_append(ctx: Context<ExtAppend>, data: ExtAppendData) -> ProgramResult {
+    pub fn ext_append(ctx: Context<ExtAppend>, data: ExtAppendData) -> Result<()> {
         /*
          * The following things are validated by Anchor
          *  writer program is a signer
@@ -252,7 +253,7 @@ pub mod solstory {
         // we want to emit! here
     }
 
-    pub fn sol_append(ctx: Context<SolAppend>) -> ProgramResult {
+    pub fn sol_append(ctx: Context<SolAppend>) -> Result<()> {
         Ok(())
         // we want to emit! here
     }
@@ -263,12 +264,14 @@ pub struct Initialize<'info> {
     #[account(init, payer=authority, seeds=[b"solstory_pda"], bump)]
     solstory_pda: Account<'info, SolstoryPDA>,
     //check that this is this program and then check that auth has update rights
+    #[account(mut)]
     authority: Signer<'info>,
     system_program: Program<'info, System>,
 
 }
 #[derive(Accounts)]
 pub struct CreateWriterMetadata<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(mut, signer)]
     writer_program: AccountInfo<'info>,
     #[account(init, payer=writer_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", writer_program.key().as_ref()], bump)]
@@ -278,10 +281,11 @@ pub struct CreateWriterMetadata<'info> {
 
 #[derive(Accounts)]
 pub struct CreateWriterHeadWriter<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(mut, signer)]
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     // 'solstory' solstory prog, mintid, writer_program
     #[account(init, payer=writer_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
@@ -292,11 +296,14 @@ pub struct CreateWriterHeadWriter<'info> {
 
 #[derive(Accounts)]
 pub struct CreateWriterHeadOwner <'info>{
+    /// CHECK: This is not an account we read from, it's an address that owns an NFT update auth,
+    /// which we verify.
     #[account(mut, signer)]
     owner_program: AccountInfo<'info>,
+    /// CHECK: This is a generic address for whic program writes to a head, it can be anything.
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     //TODO: potentially add the solstory program key into here to match the metadata pattern
     // #[account(init, payer=owner_program, seeds = [b"solstory"], bump)]
     #[account(init, payer=owner_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
@@ -316,10 +323,11 @@ pub struct WriterMetadataData {
 
 #[derive(Accounts)]
 pub struct UpdateWriterMetadata<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(signer)]
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     // 'solstory' solstory prog, mintid, writer_program
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_metadata_pda: Account<'info, WriterMetadata>,
@@ -331,11 +339,13 @@ pub struct UpdateWriterMetadata<'info> {
 
 #[derive(Accounts)]
 pub struct AuthorizeWriter<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(signer)]
     owner_program: AccountInfo<'info>,
+    /// CHECK: we only use this to get a program id
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     //TODO: potentially add the solstory program key into here to match the metadata pattern
     // #[account(init, payer=owner_program, seeds = [b"solstory"], bump)]
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
@@ -345,11 +355,13 @@ pub struct AuthorizeWriter<'info> {
 
 #[derive(Accounts)]
 pub struct DeauthorizeWriter<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(signer)]
     owner_program: AccountInfo<'info>,
+    /// CHECK: we only use this to get a program id
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     //TODO: potentially add the solstory program key into here to match the metadata pattern
     // #[account(init, payer=owner_program, seeds = [b"solstory"], bump)]
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
@@ -368,10 +380,11 @@ pub struct ExtAppendData {
 
 #[derive(Accounts)]
 pub struct ExtAppend<'info> {
+    /// CHECK: we only use this to get a program id
     #[account(signer)]
     writer_program: AccountInfo<'info>,
-    #[account(owner = token::ID)]
-    token_mint: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
 }

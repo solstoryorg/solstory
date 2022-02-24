@@ -21,28 +21,36 @@ import { Connection, NodeWallet, actions, Wallet } from '@metaplex/js';
 
 import * as sinon from 'sinon';
 
-const NEEDED_NFTS = 4;
+// because of a metaplex limitation total must evenly divide 100
+const NEEDED_NFTS = {'creation': 2, 'hashlist':2};
 
 var initialized = false;
 var queue = []
+var walletList = []
 
 
-const getWallet = async () => {
+const getWallet = async (key) => {
   if(!initialized) {
     await initialize();
   }
-  let item = queue.shift();
+  let item = queue[key].shift();
   return item;
 }
 
 const initialize = async () => {
   const promises = []
   const connection = new Connection(LOCALHOST, 'confirmed');
-  for (let i=0;i<NEEDED_NFTS;i++){
-    promises.push(generateWallet(connection))
+  let j = 0
+  for (const key in NEEDED_NFTS){
+    queue[key] = []
+    j++;
+    for (let i=0;i<NEEDED_NFTS[key];i++){
+      //javascript into -> string coorsion means this gives us a 32 letter string with 10000+i at the last 5 digits
+      promises.push(generateWallet(connection, '003000000000444400000000000'+(10000+(100*j)+i),key))
+    }
   }
   initialized = true;
-  mockAxios200(queue.map((i)=>{return i[0]}));
+  mockAxios200(walletList.map((i)=>{return i[0]}));
   return Promise.all(promises);
 
 }
@@ -85,11 +93,13 @@ const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = unde
 };
 
 
-const generateWallet = async (connection) => {
-  const payer = Keypair.generate();
+const generateWallet = async (connection, seed, key) => {
+  const payer = Keypair.fromSeed(Uint8Array.from(seed));
   const wallet = new NodeWallet(payer);
 
-  queue.push([wallet, payer]);
+  queue[key].push([wallet, payer]);
+  walletList.push([wallet, payer]);
+  console.log("Generated wallet for key", key, payer.publicKey.toBase58());
   return airdrop(connection, payer.publicKey, 3);
 
 

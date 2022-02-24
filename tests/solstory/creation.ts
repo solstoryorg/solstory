@@ -29,12 +29,12 @@ describe('solstory', () => {
   const connection = new Connection(LOCALHOST, 'confirmed');
 
   //pubkey for the writer program!
-  const writerKey = Keypair.generate()
+  const writerKey = Keypair.fromSeed(Uint8Array.from('00100000000044440000000000000001'))
   const writerWallet = new NodeWallet(writerKey);
   //pubkey for an NFT program
 
   //pubkey for a malicious user
-  const eveKey = Keypair.generate();
+  const eveKey = Keypair.fromSeed(Uint8Array.from('00100000000044440000000000000002'))
   const eveWallet = new NodeWallet(eveKey);
   //create wallets for other tests to consume
   //we do this because we can only mock once
@@ -45,9 +45,9 @@ describe('solstory', () => {
   before(async () => {
     await airdrop(connection, writerKey.publicKey, 3);
     await airdrop(connection, eveWallet.publicKey, 3);
-    nftOwnerWallet = (await getWallet())[0];
+    nftOwnerWallet = (await getWallet('creation'))[0];
     //pubkey for an NFT program
-    nftOwner2Wallet = (await getWallet())[0];
+    nftOwner2Wallet = (await getWallet('creation'))[0];
     console.log("creation wallets", nftOwnerWallet.publicKey, nftOwner2Wallet.publicKey);
 
 

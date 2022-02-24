@@ -1,0 +1,499 @@
+{
+  "version": "0.1.0",
+  "name": "solstory",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "solstoryPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createWriterMetadata",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "writerMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": {
+            "defined": "WriterMetadataData"
+          }
+        }
+      ]
+    },
+    {
+      "name": "createWriterHeadWriter",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createWriterHeadOwner",
+      "accounts": [
+        {
+          "name": "ownerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "updateWriterMetadata",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": {
+            "defined": "WriterMetadataData"
+          }
+        }
+      ]
+    },
+    {
+      "name": "authorizeWriter",
+      "accounts": [
+        {
+          "name": "ownerProgram",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deauthorizeWriter",
+      "accounts": [
+        {
+          "name": "ownerProgram",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "extAppend",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": {
+            "defined": "ExtAppendData"
+          }
+        }
+      ]
+    },
+    {
+      "name": "solAppend",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "SolstoryPDA",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "writers",
+            "type": "i32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WriterMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "writerKey",
+            "type": "publicKey"
+          },
+          {
+            "name": "visible",
+            "type": "bool"
+          },
+          {
+            "name": "accessType",
+            "type": {
+              "defined": "AccessType"
+            }
+          },
+          {
+            "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "name": "logo",
+            "type": "string"
+          },
+          {
+            "name": "cdn",
+            "type": "string"
+          },
+          {
+            "name": "metadata",
+            "type": "string"
+          },
+          {
+            "name": "baseUrl",
+            "type": "string"
+          },
+          {
+            "name": "metadataExtended",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WriterHead",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authorized",
+            "type": "bool"
+          },
+          {
+            "name": "visibleOverride",
+            "type": {
+              "defined": "HolderOverride"
+            }
+          },
+          {
+            "name": "uuid",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "currentHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolstoryItem",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "WriterMetadataData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "name": "logo",
+            "type": "string"
+          },
+          {
+            "name": "cdn",
+            "type": "string"
+          },
+          {
+            "name": "metadata",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExtAppendData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "dataHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "prevHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "newHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AccessType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ArDrive"
+          },
+          {
+            "name": "URL"
+          },
+          {
+            "name": "PDA"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HolderOverride",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Default"
+          },
+          {
+            "name": "Visible"
+          },
+          {
+            "name": "Hidden"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 13001,
+      "name": "AccountExists",
+      "msg": "This account already exists"
+    },
+    {
+      "code": 13002,
+      "name": "InvalidOwnerError",
+      "msg": "Stated owner does not have update privileges on the given metadata"
+    },
+    {
+      "code": 13003,
+      "name": "HashMismatchError",
+      "msg": "Incorrect Hashcode"
+    },
+    {
+      "code": 13004,
+      "name": "TimestampRangeError",
+      "msg": "TimestampOutOfRange"
+    },
+    {
+      "code": 13005,
+      "name": "MetaplexDeserializeError",
+      "msg": "Metplaex Deserialization Failure"
+    }
+  ],
+  "metadata": {
+    "address": "H3iPPJ6td4XPAVmBsygE8NxjnmAgeafPktr59JiV4jAv"
+  }
+}
