@@ -7,11 +7,12 @@ import { atom, useRecoilValue } from 'recoil';
 import { NFTItem } from './NFTItem';
 import { TOKEN_PROGRAM_KEY } from '../utils';
 import { useState, useEffect } from 'react';
-import { connectionAtom } from '../state';
+import { connectionAtom, solstoryProgramAtom } from '../state';
 
 export function WalletNFTs(props: {pubkey: PublicKey}) {
 
       const connection: Connection = useRecoilValue(connectionAtom);
+      const solstoryProgram = useRecoilValue(solstoryProgramAtom);
       let [nfts, setNfts] = useState([]);
       console.log(connection);
 

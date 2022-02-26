@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   RecoilRoot,
   atom,
@@ -14,9 +14,31 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import ProTip from './ProTip';
+
+import { WalletAdapterNetwork, WalletError } from '@solana/wallet-adapter-base';
+import { WalletDialogProvider, WalletMultiButton } from '@solana/wallet-adapter-material-ui';
+import { useWallet, useAnchorWallet, ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import {
+    LedgerWalletAdapter,
+    PhantomWalletAdapter,
+    SlopeWalletAdapter,
+    SolflareWalletAdapter,
+    SolletExtensionWalletAdapter,
+    SolletWalletAdapter,
+    TorusWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import { Provider } from '@project-serum/anchor';
+
+import { useSnackbar } from 'notistack';
+
 import { WalletBrowser } from './storiesdisplay';
 import { connectionAtom, solstoryProgramAtom } from './state';
-import { SolstoryAPI } from '@solstory/api';
+
+
+//hackathon bullshit because of es6 commonjs stuff
+import * as Solstory from '@solstory/api';
+const { SolstoryAPI } = Solstory.default;
+console.log('bla2', SolstoryAPI);
 
 //TODO: note to make this an env variable
 // const RPC_ENDPOINT_URL = "https://solana-api.projectserum.com"
@@ -34,41 +56,98 @@ function Copyright() {
   );
 }
 
-console.log('FUCK');
 function GlobalState (props) {
   const setConn = useSetRecoilState(connectionAtom)
   const setSolstoryProgram = useSetRecoilState(solstoryProgramAtom)
   const conn = new Connection(RPC_ENDPOINT_URL);
-  console.log('wut', conn);
-  React.useEffect(() =>{
+  const wallet = useAnchorWallet();
+  useEffect(() =>{
+    const endpoint = RPC_ENDPOINT_URL
     setConn(conn);
-    const solstoryProgram = new SolstoryAPI({});
-    console.log(solstoryProgram);
-    setSolstoryProgram(solstoryProgram)
+    // const solstoryProgram = new SolstoryAPI({}, new Provider(conn, emptyWallet, {}) );
+    // console.log(solstoryProgram);
+    // setSolstoryProgram(solstoryProgram)
   },[props])
+
+  //Stuff for solana wallets
+      const wallets = useMemo(
+        () => [
+            new PhantomWalletAdapter(),
+            new SlopeWalletAdapter(),
+            // new SolflareWalletAdapter({ network }),
+            new TorusWalletAdapter(),
+            new LedgerWalletAdapter(),
+            // new SolletWalletAdapter({ network }),
+            // new SolletExtensionWalletAdapter({ network }),
+        ],
+        [props]
+        // [network]
+    );
+
+        const { enqueueSnackbar } = useSnackbar();
+    const onError = useCallback(
+        (error: WalletError) => {
+            enqueueSnackbar(error.message ? `${error.name}: ${error.message}` : error.name, { variant: 'error' });
+            console.error(error);
+        },
+        [enqueueSnackbar]
+    );
   return (
-    <Container maxWidth="md">
-      {props.children}
-    </Container>
+      <WalletProvider wallets={wallets} onError={ onError } autoConnect>
+          <WalletDialogProvider>
+            {props.children}
+          </WalletDialogProvider>
+      </WalletProvider>
   );
 
 }
-export default function App() {
+
+const Content = () => {
+  const { publicKey }= useWallet();
+  const anchorWallet = useAnchorWallet();
+  const setSolstoryProgram = useSetRecoilState(solstoryProgramAtom);
+  useEffect(() => {
+    if(anchorWallet === undefined){
+      console.log("undefined wallet, aborting");
+      return;
+    }
+    console.log("attmepting to create provider")
+    const conn = new Connection(RPC_ENDPOINT_URL);
+    console.log("wow we skipped it")
+    const solstoryProgram = new SolstoryAPI({}, new Provider(conn, anchorWallet, {}) );
+    console.log(solstoryProgram);
+    setSolstoryProgram(solstoryProgram);
+
+  },
+     [publicKey])
   return (
-    <RecoilRoot>
-        <GlobalState>
+    <Container maxWidth="md">
+
           <Box sx={{ my: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
               Create React App example with TypeScript
             </Typography>
             <ProTip />
-            <Copyright />
+          </Box>
+          <Box sx={{display: "flex", justifyContent: "center", margin:4}}>
+              <WalletMultiButton />
           </Box>
           <Box> {/*divider*/}
           </Box>
           <Box>{/*main */}
             <WalletBrowser />
           </Box>
+          <Box sx={{margin:2}}>
+            <Copyright />
+        </Box>
+    </Container>
+  );
+}
+export default function App() {
+  return (
+    <RecoilRoot>
+        <GlobalState>
+          <Content/>
         </GlobalState>
     </RecoilRoot>
   );

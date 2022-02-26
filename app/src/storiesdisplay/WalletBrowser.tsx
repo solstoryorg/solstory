@@ -13,7 +13,6 @@ const TMP_TEST_KEY = new PublicKey('CYfwu9BtsSCnUqtxt72gujfr4j2WWiimPd5y9tM34CwP
 export function WalletBrowser() {
   var f = 'f';
   const [searchPubkey, setSearchPubkey] = useState(TMP_TEST_KEY);
-  const [wallet, setWallet] = useState(undefined);
   const [isError, setIsError] = useState({error: false});
   const popupItem = useRecoilValue(popupAtom);
 
@@ -24,7 +23,7 @@ export function WalletBrowser() {
   const updateChange = (e)=> {
     console.log("event", e);
     const text = e.target.value;
-    if (text.length != 44) {
+    if (text.length !== 44) {
       setIsError({error: true});
     } else {
       setIsError({error: false});

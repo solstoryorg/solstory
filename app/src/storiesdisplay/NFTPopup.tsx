@@ -17,26 +17,26 @@ export function NFTPopup(props: {metadata: any, extendedMetadata: any, x: number
    */
   function useOutsideAlerter(ref) {
     const setPopup = useSetRecoilState(popupAtom);
-      useEffect(() => {
-          /**
-           * Alert if clicked on outside of element
-           */
-          console.log("stories met", props.metadata);
-          console.log("stories ext met", props.extendedMetadata);
-          function handleClickOutside(event) {
-              if (ref.current && !ref.current.contains(event.target)) {
-                  console.log("You clicked outside of me!");
-                  setPopup(null);
-              }
-          }
+    useEffect(() => {
+        /**
+         * Alert if clicked on outside of element
+         */
+        console.log("stories met", props.metadata);
+        console.log("stories ext met", props.extendedMetadata);
+        function handleClickOutside(event) {
+            if (ref.current && !ref.current.contains(event.target)) {
+                console.log("You clicked outside of me!");
+                setPopup(null);
+            }
+        }
 
-          // Bind the event listener
-          document.addEventListener("mousedown", handleClickOutside);
-          return () => {
-              // Unbind the event listener on clean up
-              document.removeEventListener("mousedown", handleClickOutside);
-          };
-      }, [ref]);
+        // Bind the event listener
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            // Unbind the event listener on clean up
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [ref]);
   }
 
   const wrapperRef = useRef(null);

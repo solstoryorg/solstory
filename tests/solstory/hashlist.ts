@@ -80,6 +80,7 @@ describe('solstory hashlist test', async () => {
       return program.rpc.createWriterMetadata(
         {
           label: "creation metadata",
+          description: "this is a metadata description",
           logo: "www.example.com",
           url: "www.example.com",
           cdn: "",

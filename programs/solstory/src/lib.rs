@@ -34,6 +34,7 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).label = data.label;
         (*ctx.accounts.writer_metadata_pda).url =  data.url;
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
+        (*ctx.accounts.writer_metadata_pda).description = data.description;
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
 
         if data.metadata.len() > 0{
@@ -151,6 +152,7 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).label = data.label;
         (*ctx.accounts.writer_metadata_pda).url =  data.url;
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
+        (*ctx.accounts.writer_metadata_pda).description = data.description;
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
 
         if data.metadata.len() > 0{
@@ -315,6 +317,7 @@ pub struct CreateWriterHeadOwner <'info>{
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WriterMetadataData {
     label: String,
+    description: String,
     url: String,
     logo: String,
     cdn: String,

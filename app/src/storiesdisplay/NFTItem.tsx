@@ -47,7 +47,7 @@ export function NFTItem(props: {nft: any}) {
       return 'spinny';
     return (
       <Box >
-        <Paper sx={{display: 'flex', aspectRatio: 1.0, height:1.0}} onClick={(e)=>popup(e)} title={extMetadata.description}>
+      <Paper sx={{display: 'flex', aspectRatio: 1.0, height:1.0, cursor: "pointer"}} onClick={(e)=>popup(e)} title={extMetadata.description}>
           <Box sx={{display: 'inline-flex', maxWidth:0.3, m:1}} component="img" src={extMetadata.image}/>
           <Box sx={{display: 'inline-flex', maxWidth:0.7, m:1}}>
         <h3>{extMetadata.name}</h3>

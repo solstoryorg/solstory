@@ -76,16 +76,17 @@ pub struct WriterMetadata {
     // This can be a program _or_ an authorizing key.
     pub writer_key: Pubkey, //this is used for the memcpy search
     pub visible: bool,
-    pub access_type: AccessType,
 
 
     //for writer, semi-static
     pub label: String, // 128
+    pub description: String, // 128
     pub url: String, // 192
     pub logo: String, // 192
     pub cdn: String, // 192, //semi static
-    pub metadata: String, //use this for whateever
     pub base_url: String, //192 only meaningful in cases where AccessType=URL
+
+    pub metadata: String, // 192 url location of additional metadata
 
     //TODO: Determine metadata PDA standard
     pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.
@@ -126,7 +127,8 @@ pub struct WriterHead {
     pub authorized: bool,
     pub visible_override: HolderOverride, //Allow the holder of the NFT to hard-override things.
 
-    //if we hard use cdn or ARdrive
+    //keeping access type in head allows for multiple types of nodes
+    pub access_type: AccessType,
     pub uuid: [u8; 16],
     pub current_hash: [u8; 32],
 }

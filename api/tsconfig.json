@@ -2,18 +2,27 @@
   "compilerOptions": {
     "types": ["mocha", "chai"],
     "typeRoots": ["../node_modules/@types"],
-    "lib": ["es2021", "DOM"],
-    "module": "commonjs",
-    "target": "es2021",
-    "moduleResolution": "Node",
+    "lib": ["es2021", "DOM", "DOM.Iterable"],
+    "module": "es2020",
+    "target": "es2020",
+    "moduleResolution": "node",
     "sourceMap": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noImplicitReturns": true,
+    // "noImplicitThis": true,
+    // "noImplicitAny": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
     "strict": true,
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "outDir": "dist"
+    "outDir": "dist/esm"
   },
+  "files": ["src/programs/solstory.json"],
   "include": ["src/**/*"]
 }
+
