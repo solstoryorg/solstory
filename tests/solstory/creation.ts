@@ -91,13 +91,13 @@ describe('solstory', () => {
   });
 
   it('creates a writer metadata account', async function () {
-    const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
 
-    const writerMetadataPda = _writerMetadataPda;
+    const writerMetadataPda = writerMetadataPda;
     const acts = {
         writerProgram: writerWallet.publicKey,
         ownerProgram: nftOwnerWallet.publicKey,
@@ -106,10 +106,10 @@ describe('solstory', () => {
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       }
 
-    const tx = program.rpc.createWriterMetadata(
+    return program.rpc.createWriterMetadata(
       {
         label: "creation metadata",
-        description: "this is a metadata description",
+        description: "metadata from 'creates a writer metadata account'",
         logo: "www.example.com",
         url: "www.example.com",
         cdn: "",
@@ -119,27 +119,167 @@ describe('solstory', () => {
       accounts: acts,
       signers: [writerWallet.payer]
 
+    }).then((tx) => {
+      console.log("stuff from metadata", tx)
+      program.account.writerMetadata.fetch(writerMetadataPda)
+      .then((meta)=>{
+        console.log("meta from createwritermeta", meta);
+        return meta.label.is.equal("creation metadata");
+      })
     });
+
 
 
   });
 
-  it('Is creates a writer head account as the owner', async function () {
-    const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+  it('creates extended metadata', async function() {
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
 
-    const writerMetadataPda = _writerMetadataPda;
+    const [writerExtendedMetadataPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), Buffer.from(anchor.utils.bytes.utf8.encode("extended")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
 
-    const [_writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        writerMetadataPda: writerMetadataPda,
+        extendedMetadataPda: writerExtendedMetadataPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }
+    const tx = program.rpc.setExtendedMetadata(JSON.stringify("{metadata: \"here\""),
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    // console.dir(tx);
+    return tx.then((tx)=>{
+      program.account.extendedMetadata.fetch(writerExtendedMetadataPda)
+      .then((meta)=> {
+        return JSON.parse(meta.extendedMetadata).metadata.is.equal('here');
+      });
+    });
+
+  });
+
+  it('updates extended metadata', async function() {
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const [writerExtendedMetadataPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), Buffer.from(anchor.utils.bytes.utf8.encode("extended")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        writerMetadataPda: writerMetadataPda,
+        extendedMetadataPda: writerExtendedMetadataPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+    const tx = program.rpc.setExtendedMetadata(JSON.stringify("{metadata: \"less\""),
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    return tx.then((tx)=>{
+      program.account.extendedMetadata.fetch(writerExtendedMetadataPda)
+      .then((meta)=> {
+        return JSON.parse(meta.extendedMetadata).metadata.is.equal('less');
+      });
+    });
+  });
+
+  it('too-big extended metadata fails', async function() {
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const [writerExtendedMetadataPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), Buffer.from(anchor.utils.bytes.utf8.encode("extended")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        writerMetadataPda: writerMetadataPda,
+        extendedMetadataPda: writerExtendedMetadataPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+    const tx = program.rpc.setExtendedMetadata(JSON.stringify("{metadata: \"this is more\""),
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    return tx.should.eventually.be.rejectedWith("A space constraint was violated");
+  });
+
+  it('deletes extended metadata', async function() {
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const [writerExtendedMetadataPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), Buffer.from(anchor.utils.bytes.utf8.encode("extended")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        writerMetadataPda: writerMetadataPda,
+        extendedMetadataPda: writerExtendedMetadataPda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+    const tx = program.rpc.deleteExtendedMetadata(
+    {
+      accounts: acts,
+      signers: [writerWallet.payer]
+
+    }
+    );
+    return tx.then((tx)=>{
+      program.account.extendedMetadata.fetch(writerExtendedMetadataPda)
+      .should.eventually.be.rejected;
+    });
+  });
+
+  it('Is creates a writer head account as the owner', async function () {
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+
+    const [writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
 
-    const writerHeadPda = _writerHeadPda;
     const metaplex_pda = await Metadata.getPDA(mint);
     const acts = {
         writerProgram: writerWallet.publicKey,
@@ -205,13 +345,12 @@ describe('solstory', () => {
     //I create a metaplex mint
     //hmmmm
     //gotta figure out how to do that in JYES
-    const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+    const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
 
-    const writerMetadataPda = _writerMetadataPda;
     const metaplex_pda = await Metadata.getPDA(mint2);
     const acts = {
         writerProgram: eveWallet.publicKey,
@@ -230,19 +369,17 @@ describe('solstory', () => {
 
     }
     );
-    // console.dir(tx);
     return tx.should.be.rejected;
   });
 
   describe('writer test flow', function() {
       step('Succeeds in creating a writer head as the not-owner', async function () {
-      const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+      const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
         program.programId
       ); //TODO: library function for this
 
-      const writerMetadataPda = _writerMetadataPda;
 
       const [_writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],

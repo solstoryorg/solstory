@@ -1,6 +1,7 @@
 
 
 export type Metadata = {
+  writerKey: string;
   label: string,
   description: string,
   url: string,
@@ -8,8 +9,8 @@ export type Metadata = {
   cdn: string,
   baseUrl: string,
 
+  metadata: string,
   hasExtendedMetadata: boolean,
-  extendedMetadataUrl: string,
   extendedMetadata: {}
 }
 

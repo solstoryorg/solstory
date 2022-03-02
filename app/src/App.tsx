@@ -31,13 +31,13 @@ import { Provider } from '@project-serum/anchor';
 
 import { useSnackbar } from 'notistack';
 
-import { WalletBrowser } from './storiesdisplay';
 import { connectionAtom, solstoryProgramAtom } from './state';
+import { TabContainer } from './TabContainer';
 
 
 //hackathon bullshit because of es6 commonjs stuff
-import * as Solstory from '@solstory/api';
-const { SolstoryAPI } = Solstory.default;
+import  solstory  from '@solstory/api';
+const { SolstoryAPI } = solstory;
 console.log('bla2', SolstoryAPI);
 
 //TODO: note to make this an env variable
@@ -51,7 +51,7 @@ function Copyright() {
       <Link color="inherit" href="https://mui.com/">
         Your Website
       </Link>{' '}
-      {new Date().getFullYear()}.
+    {new Date().getFullYear()}. Rocket from <Link href="https://iconduck.com/icons/49302/rocket">Iconduck</Link>
     </Typography>
   );
 }
@@ -70,7 +70,7 @@ function GlobalState (props) {
   },[props])
 
   //Stuff for solana wallets
-      const wallets = useMemo(
+  const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),
             new SlopeWalletAdapter(),
@@ -84,7 +84,7 @@ function GlobalState (props) {
         // [network]
     );
 
-        const { enqueueSnackbar } = useSnackbar();
+    const { enqueueSnackbar } = useSnackbar();
     const onError = useCallback(
         (error: WalletError) => {
             enqueueSnackbar(error.message ? `${error.name}: ${error.message}` : error.name, { variant: 'error' });
@@ -135,7 +135,7 @@ const Content = () => {
           <Box> {/*divider*/}
           </Box>
           <Box>{/*main */}
-            <WalletBrowser />
+          <TabContainer />
           </Box>
           <Box sx={{margin:2}}>
             <Copyright />

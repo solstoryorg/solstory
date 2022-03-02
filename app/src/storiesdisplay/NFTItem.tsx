@@ -1,10 +1,11 @@
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import {utils} from '@metaplex/js';
 import { PublicKey, Keypair, SystemProgram, Connection, TokenAccountsFilter } from "@solana/web3.js";
-import { connectionAtom, popupAtom } from '../state';
+import { connectionAtom, popupAtom, solstoryProgramAtom } from '../state';
 import { atom, useRecoilValue, useSetRecoilState } from 'recoil';
 import {NFTPopup } from './NFTPopup';
 
@@ -46,16 +47,14 @@ export function NFTItem(props: {nft: any}) {
     if (extMetadata == undefined)
       return 'spinny';
     return (
-      <Box >
       <Paper sx={{display: 'flex', aspectRatio: 1.0, height:1.0, cursor: "pointer"}} onClick={(e)=>popup(e)} title={extMetadata.description}>
           <Box sx={{display: 'inline-flex', maxWidth:0.3, m:1}} component="img" src={extMetadata.image}/>
           <Box sx={{display: 'inline-flex', maxWidth:0.7, m:1}}>
-        <h3>{extMetadata.name}</h3>
+        <Typography variant="h6">{extMetadata.name}</Typography>
 
           </Box>
         </Paper>
 
-        </Box>
     )
 
   }

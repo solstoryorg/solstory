@@ -247,6 +247,53 @@
       ]
     },
     {
+      "name": "setExtendedMetadata",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "extendedMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "metadataJson",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "deleteExtendedMetadata",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "extendedMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "solAppend",
       "accounts": [],
       "args": []
@@ -283,13 +330,11 @@
             "type": "bool"
           },
           {
-            "name": "accessType",
-            "type": {
-              "defined": "AccessType"
-            }
+            "name": "label",
+            "type": "string"
           },
           {
-            "name": "label",
+            "name": "description",
             "type": "string"
           },
           {
@@ -305,11 +350,11 @@
             "type": "string"
           },
           {
-            "name": "metadata",
+            "name": "baseUrl",
             "type": "string"
           },
           {
-            "name": "baseUrl",
+            "name": "metadata",
             "type": "string"
           },
           {
@@ -335,6 +380,12 @@
             }
           },
           {
+            "name": "accessType",
+            "type": {
+              "defined": "AccessType"
+            }
+          },
+          {
             "name": "uuid",
             "type": {
               "array": [
@@ -356,6 +407,22 @@
       }
     },
     {
+      "name": "ExtendedMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "writerKey",
+            "type": "publicKey"
+          },
+          {
+            "name": "extendedMetadata",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "SolstoryItem",
       "type": {
         "kind": "struct",
@@ -371,6 +438,10 @@
         "fields": [
           {
             "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "description",
             "type": "string"
           },
           {

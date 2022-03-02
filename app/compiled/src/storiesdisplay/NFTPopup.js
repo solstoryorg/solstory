@@ -1,6 +1,7 @@
 import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { popupAtom } from '../state';
 import { useSetRecoilState } from 'recoil';
 import { useRef, useEffect } from 'react';
@@ -38,5 +39,5 @@ export function NFTPopup(props) {
             left: props.x,
             top: props.y,
             padding: 1,
-        } }, { children: [_jsxs("h3", { children: [props.metadata.data.data.name, " Stories"] }, void 0), _jsx(Box, { children: _jsx("a", Object.assign({ href: props.extendedMetadata.external_url }, { children: "link" }), void 0) }, void 0)] }), void 0));
+        } }, { children: [_jsxs(Typography, Object.assign({ variant: "h6" }, { children: [props.metadata.data.data.name, " Stories"] }), void 0), _jsx(Box, { children: _jsx("a", Object.assign({ href: props.extendedMetadata.external_url }, { children: "link" }), void 0) }, void 0)] }), void 0));
 }

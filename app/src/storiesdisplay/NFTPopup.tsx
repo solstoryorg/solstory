@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import Grid from '@mui/material/Grid';
 import {utils} from '@metaplex/js';
@@ -50,7 +51,7 @@ export function NFTPopup(props: {metadata: any, extendedMetadata: any, x: number
       top: props.y,
       padding: 1,
       }}>
-      <h3>{props.metadata.data.data.name} Stories</h3>
+      <Typography variant="h6">{props.metadata.data.data.name} Stories</Typography>
       <Box>
       <a href={props.extendedMetadata.external_url}>link</a>
 

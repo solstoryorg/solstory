@@ -20,7 +20,21 @@ export class SolstoryCommonAPI {
    *
    * @param writerKey the pubkey of the writer program
    **/
-  async getWriterMetadataPDA(writerKey: PublicKey): Promise<PublicKey> {
+  async getWriterMetadataPda(writerKey: PublicKey): Promise<PublicKey> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerKey.toBuffer()],
+      this.program.programId
+    ).then((value: [writerMetadataPda:PublicKey, _nonce:number]) => {
+      return value[0];
+    });
+  }
+
+  /**
+   * Grab the PDA address for the metadata of a writer program.
+   *
+   * @param writerKey the pubkey of the writer program
+   **/
+  async getWriterExtendedMetadataPda(writerKey: PublicKey): Promise<PublicKey> {
     return PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerKey.toBuffer()],
       this.program.programId
@@ -35,7 +49,7 @@ export class SolstoryCommonAPI {
    * @param writerKey the pubkey of the writer program
    * @param mintKey the mint of the NFT – this is the same one you would use for metaplex metadata.
    **/
-  async getWriterHeadPDA(writerKey: PublicKey, mintKey: PublicKey): Promise<PublicKey> {
+  async getWriterHeadPda(writerKey: PublicKey, mintKey: PublicKey): Promise<PublicKey> {
     return PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mintKey.toBuffer(), writerKey.toBuffer()],
       this.program.programId

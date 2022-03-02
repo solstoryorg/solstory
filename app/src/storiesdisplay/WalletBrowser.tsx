@@ -5,7 +5,7 @@ import Grid from '@mui/material/Grid';
 import { WalletNFTs } from './WalletNFTs';
 import { PublicKey, Keypair, SystemProgram, Connection, TokenAccountsFilter } from "@solana/web3.js";
 import { useState, useEffect } from 'react';
-import { popupAtom } from '../state';
+import { popupAtom, solstoryProgramAtom } from '../state';
 import { atom, useRecoilValue } from 'recoil';
 
 
@@ -15,8 +15,11 @@ export function WalletBrowser() {
   const [searchPubkey, setSearchPubkey] = useState(TMP_TEST_KEY);
   const [isError, setIsError] = useState({error: false});
   const popupItem = useRecoilValue(popupAtom);
+  // const wallet = useAnchorWallet();
+  const solstoryProgram = useRecoilValue(solstoryProgramAtom);
 
   const renderPopup = () =>{
+
     return popupItem;
   }
 

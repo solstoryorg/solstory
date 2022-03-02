@@ -4,7 +4,7 @@ import TextField from '@mui/material/TextField';
 import { WalletNFTs } from './WalletNFTs';
 import { PublicKey } from "@solana/web3.js";
 import { useState } from 'react';
-import { popupAtom } from '../state';
+import { popupAtom, solstoryProgramAtom } from '../state';
 import { useRecoilValue } from 'recoil';
 const TMP_TEST_KEY = new PublicKey('CYfwu9BtsSCnUqtxt72gujfr4j2WWiimPd5y9tM34CwP');
 export function WalletBrowser() {
@@ -12,6 +12,8 @@ export function WalletBrowser() {
     const [searchPubkey, setSearchPubkey] = useState(TMP_TEST_KEY);
     const [isError, setIsError] = useState({ error: false });
     const popupItem = useRecoilValue(popupAtom);
+    // const wallet = useAnchorWallet();
+    const solstoryProgram = useRecoilValue(solstoryProgramAtom);
     const renderPopup = () => {
         return popupItem;
     };

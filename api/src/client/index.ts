@@ -1,4 +1,4 @@
-import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
+import { ProgramAccount, Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
 import axios from 'axios';
 import * as api from '../';
 import { Metadata, AccessType, VisibilityOverride, Head, Item } from '../common/types'
@@ -36,34 +36,56 @@ export class SolstoryClientAPI {
    * This function will _assume_ a full refresh is desired, and will refresh
    * SolstoryAPI's internal cache of the metadata.k
    *
+   *  @param cacheOverChain if this is true, we'll try to use the local cache instead
+   *  of calling the blockhain
    */
-
-  getAllMetadata(): Promise<Metadata[]> {
+  getAllMetadata(cacheOverChain=false): Promise<Metadata[]> {
+    console.log("getallmetadata");
     // try cdn first
     if(this.program.globalCdn){
       // web request here
       return axios.get(this.program.globalCdn+'/metadata/all')
         .then((res) => {
           console.log(res);
-
           //here we insert them into the cache.
           return []
-
         });
     }
 
+    if  (cacheOverChain && Date.now()-(1000*this.program.cacheTimeout) > this.program.metadataCache.lastAll ){
+      return Promise.resolve(Object.values(this.program.metadataCache.metadata));
+    }
 
     // failing that use
-    return this.program.account.Metadata.all().
-      then((accts:any) => {
-      return accts;
-    })
+    return this.program.account.writerMetadata.all().
+      then((accts:ProgramAccount[]) => {
+      const outMetadata: Metadata[] = []
+      console.log("raw metadata on chain result", accts);
+      accts.forEach((acct, index) =>{
+        let metadata:Metadata = {...(acct.account)};
 
-    // then(data=>
+        this.program.metadataCache.metadata[acct.account.writerKey.toString()] = metadata
+        outMetadata.push(metadata);
+      });
+      this.program.metadataCache.lastAll = Date.now();
+
+      return outMetadata;
+    })
+  }
+
+  getHeadsForNFT(nft:any): Promise<Head[]> {
+    // check for cache expiration
+    if  (Date.now()-(1000*this.program.cacheTimeout) > this.program.metadataCache.lastAll ){
+      //this will refresh the cache
+      this.getAllMetadata();
+
+    }
+
+    // generate head pdas from metadata + nft mint token
+    // lookup all head PDAs in a mass call
 
     return Promise.resolve([]);
   }
-
 
   // getAllMetadataChain(): Promise
 

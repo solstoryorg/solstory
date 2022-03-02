@@ -55,6 +55,7 @@ pub struct SolstoryPDA {
     pub writers: i32,
 }
 
+// Make sure to upgrade typescript enum when changing this
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
 pub enum AccessType {
     ArDrive,
@@ -75,6 +76,7 @@ pub struct WriterMetadata {
     //for NFT owner
     // This can be a program _or_ an authorizing key.
     pub writer_key: Pubkey, //this is used for the memcpy search
+    // This is used for the Writer Key themselves to set something invis
     pub visible: bool,
 
 
@@ -133,6 +135,11 @@ pub struct WriterHead {
     pub current_hash: [u8; 32],
 }
 
+#[account]
+pub struct ExtendedMetadata {
+    pub writer_key: Pubkey, //this is used for the memcpy search
+    pub extended_metadata: String
+}
 // This entire section pulled from
 // https://docs.rs/anchor-lang/0.20.0/anchor_lang/accounts/account/struct.Account.html#impl-Accounts%3C%27info%3E
 #[derive(Clone)]

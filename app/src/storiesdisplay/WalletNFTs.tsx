@@ -32,10 +32,10 @@ export function WalletNFTs(props: {pubkey: PublicKey}) {
 
 
       return (
-      <Grid container spacing={2}>
-      {nfts.map((nft, index) => {return (
-        <NFTItem nft={nft} />
-      )})}
+            <Grid container direction="row" spacing={2}>
+            {nfts.map((nft, index) => {return (
+              <NFTItem nft={nft} />
+            )})}
       </Grid>
       )
 

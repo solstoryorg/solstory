@@ -1,1 +1,1 @@
-{"version":3,"file":"NFTPopup.d.ts","sourceRoot":"","sources":["../../../src/storiesdisplay/NFTPopup.tsx"],"names":[],"mappings":";AAWA,wBAAgB,QAAQ,CAAC,KAAK,EAAE;IAAC,QAAQ,EAAE,GAAG,CAAC;IAAC,gBAAgB,EAAE,GAAG,CAAC;IAAC,CAAC,EAAE,MAAM,CAAC;IAAC,CAAC,EAAE,MAAM,CAAA;CAAC,eAgD3F"}
+{"version":3,"file":"NFTPopup.d.ts","sourceRoot":"","sources":["../../../src/storiesdisplay/NFTPopup.tsx"],"names":[],"mappings":";AAYA,wBAAgB,QAAQ,CAAC,KAAK,EAAE;IAAC,QAAQ,EAAE,GAAG,CAAC;IAAC,gBAAgB,EAAE,GAAG,CAAC;IAAC,CAAC,EAAE,MAAM,CAAC;IAAC,CAAC,EAAE,MAAM,CAAA;CAAC,eAgD3F"}

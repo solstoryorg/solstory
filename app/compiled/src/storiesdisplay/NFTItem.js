@@ -1,8 +1,9 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { utils } from '@metaplex/js';
 import { connectionAtom, popupAtom } from '../state';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -38,7 +39,7 @@ export function NFTItem(props) {
     const renderExtMetadata = (extMetadata) => {
         if (extMetadata == undefined)
             return 'spinny';
-        return (_jsx(Box, { children: _jsxs(Paper, Object.assign({ sx: { display: 'flex', aspectRatio: 1.0, height: 1.0, cursor: "pointer" }, onClick: (e) => popup(e), title: extMetadata.description }, { children: [_jsx(Box, { sx: { display: 'inline-flex', maxWidth: 0.3, m: 1 }, component: "img", src: extMetadata.image }, void 0), _jsx(Box, Object.assign({ sx: { display: 'inline-flex', maxWidth: 0.7, m: 1 } }, { children: _jsx("h3", { children: extMetadata.name }, void 0) }), void 0)] }), void 0) }, void 0));
+        return (_jsxs(Paper, Object.assign({ sx: { display: 'flex', aspectRatio: 1.0, height: 1.0, cursor: "pointer" }, onClick: (e) => popup(e), title: extMetadata.description }, { children: [_jsx(Box, { sx: { display: 'inline-flex', maxWidth: 0.3, m: 1 }, component: "img", src: extMetadata.image }, void 0), _jsx(Box, Object.assign({ sx: { display: 'inline-flex', maxWidth: 0.7, m: 1 } }, { children: _jsx(Typography, Object.assign({ variant: "h6" }, { children: extMetadata.name }), void 0) }), void 0)] }), void 0));
     };
     console.log(props.nft);
     return (_jsx(Grid, Object.assign({ item: true, xs: 12, sm: 6, md: 4, sx: {} }, { children: _jsx(Box, { children: renderExtMetadata(extendedMetadata) }, void 0) }), void 0));

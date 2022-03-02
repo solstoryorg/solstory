@@ -23,7 +23,7 @@ export function WalletNFTs(props) {
         });
     };
     useEffect(() => { getNFTs(props.pubkey); }, [props.pubkey]);
-    return (_jsx(Grid, Object.assign({ container: true, spacing: 2 }, { children: nfts.map((nft, index) => {
+    return (_jsx(Grid, Object.assign({ container: true, direction: "row", spacing: 2 }, { children: nfts.map((nft, index) => {
             return (_jsx(NFTItem, { nft: nft }, void 0));
         }) }), void 0));
 }

@@ -3,6 +3,7 @@ pub mod error;
 pub mod utils;
 
 use anchor_lang::prelude::*;
+use solana_program::pubkey::PUBKEY_BYTES;
 use anchor_spl::token;
 use anchor_spl::token::Mint;
 use crate::utils::*;
@@ -31,6 +32,7 @@ pub mod solstory {
     }
 
     pub fn create_writer_metadata(ctx: Context<CreateWriterMetadata>, data: WriterMetadataData) -> Result<()> {
+        (*ctx.accounts.writer_metadata_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_metadata_pda).label = data.label;
         (*ctx.accounts.writer_metadata_pda).url =  data.url;
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
@@ -149,6 +151,7 @@ pub mod solstory {
          * TODO: metaplex metadata is for the token mint
          */
 
+        //We don't update the writer_key here because it can only be set once and must be the same.
         (*ctx.accounts.writer_metadata_pda).label = data.label;
         (*ctx.accounts.writer_metadata_pda).url =  data.url;
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
@@ -255,9 +258,21 @@ pub mod solstory {
         // we want to emit! here
     }
 
-    pub fn sol_append(ctx: Context<SolAppend>) -> Result<()> {
+    pub fn set_extended_metadata(ctx: Context<SetExtendedMetadata>, metadata_json: String)->Result<()>{
+        (*ctx.accounts.extended_metadata_pda).writer_key = *ctx.accounts.writer_program.key;
+        (*ctx.accounts.extended_metadata_pda).extended_metadata = metadata_json;
+
         Ok(())
-        // we want to emit! here
+    }
+
+    pub fn delete_extended_metadata(ctx: Context<DeleteExtendedMetadata>)->Result<()>{
+        // close is called by anchor, we just ok out
+        Ok(())
+    }
+
+    pub fn sol_append(ctx: Context<SolAppend>) -> Result<()> {
+        // not supported in v1
+        Ok(())
     }
 }
 
@@ -371,6 +386,29 @@ pub struct DeauthorizeWriter<'info> {
     writer_head_pda: Account<'info, WriterHead>,
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
 }
+
+#[derive(Accounts)]
+pub struct DeleteExtendedMetadata<'info> {
+    /// CHECK: we only use this to get a program id
+    #[account(mut, signer)]
+    pub writer_program: AccountInfo<'info>,
+    #[account(mut, seeds = [b"solstory", b"extended", writer_program.key().as_ref()], bump, close=writer_program)]
+    pub extended_metadata_pda: Account<'info, ExtendedMetadata>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(metadata_json:String)]
+pub struct SetExtendedMetadata<'info> {
+    /// CHECK: we only use this to get a program id
+    #[account(mut, signer)]
+    pub writer_program: AccountInfo<'info>,
+    #[account(init_if_needed, payer=writer_program, seeds = [b"solstory", b"extended", writer_program.key().as_ref()], bump, space=12+PUBKEY_BYTES+metadata_json.len())]
+    pub extended_metadata_pda: Account<'info, ExtendedMetadata>,
+    pub system_program: Program<'info, System>,
+
+}
+
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ExtAppendData {

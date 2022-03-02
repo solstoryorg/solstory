@@ -1,9 +1,10 @@
-export * as utils from "./utils/index";
+import * as utils from "./utils/index";
 import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
 import { SolstoryClientAPI } from './client'
 import { SolstoryServerAPI } from './server'
 import { SolstoryCommonAPI } from './common'
 import { Metadata, AccessType, VisibilityOverride, Head, Item } from './common/types'
+import { SOLSTORY_PUBKEY } from './constants'
 // import * as fs from 'fs';
 
 import * as solstoryIdl from './programs/solstory.json'
@@ -11,7 +12,6 @@ import * as solstoryIdl from './programs/solstory.json'
 const idl2 = JSON.parse(JSON.stringify(solstoryIdl));
 
 // console.log(solstoryIdl)
-const SOLSTORY_PUBKEY = "H3iPPJ6td4XPAVmBsygE8NxjnmAgeafPktr59JiV4jAv"
 
 /**
  * @param globalCdn This is the global cdn, which allows for the connecting of NFTs to Metadata/Stories.
@@ -22,8 +22,8 @@ type SolstoryConfig = {
 }
 
 type MetadataCache = {
-  last_all: Date|undefined,
-  metadata: {},
+  lastAll: number,
+  metadata: {[writerKey: string]: Metadata},
 }
 
 export interface SolstoryAPI extends Program {
@@ -43,17 +43,15 @@ export interface SolstoryAPI extends Program {
 export class SolstoryAPI extends Program<Idl> implements SolstoryAPI {
 // class SolstoryAPI {
   constructor(solstoryConfig: SolstoryConfig, provider?: Provider, coder?: Coder){
-    console.log('init');
     super(idl2.default, SOLSTORY_PUBKEY, provider, coder);
-    console.log("api!!", this);
+    this.metadataCache = {
+      lastAll: 0,
+      metadata: {}
+    }
 
     this.client = new SolstoryClientAPI(this);
     this.server = new SolstoryServerAPI(this);
     this.common = new SolstoryCommonAPI(this);
-    this.metadataCache = {
-      last_all: undefined,
-      metadata: {}
-    }
 
 
     this.cacheTimeout = 0;
@@ -68,6 +66,9 @@ export class SolstoryAPI extends Program<Idl> implements SolstoryAPI {
       this.globalCdn = solstoryConfig.globalCdn;
     }
 
+    console.log("Solstory api!!", this);
   }
 }
+
+export default { SolstoryAPI, utils }
 

@@ -18,7 +18,7 @@ default = []
 
 [dependencies]
 arraystring = "^0.3.0"
-anchor-lang = "^0.22.0"
+anchor-lang = { version="^0.22.0", features=["init-if-needed"]}
 anchor-spl = "^0.22.0"
 solana-program = "^1.9.2"
 borsh = "^0.9"
