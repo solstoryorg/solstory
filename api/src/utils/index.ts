@@ -1,13 +1,17 @@
 import * as crypto from 'crypto';
 import * as anchor from '@project-serum/anchor';
-import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
+import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder, Wallet } from '@project-serum/anchor';
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import { SOLSTORY_PUBKEY } from '../constants';
+import nacl from 'tweetnacl';
+import { AnchorWallet } from '@solana/wallet-adapter-react'
+import bs58 from 'bs58';
+
 /* Hash function */
 
 export const timestampToBytes = (timestamp:any) => {
     const byteTime = new Uint8Array(8);
-    for (let i=0; i<8;i++) {
+    for (var i=0; i<8; i++) {
         // byteTime[i] = (timestamp >> i*8) % 256;
         byteTime[7-i] = (timestamp/(256**i)) % 256;
     }
@@ -28,5 +32,3 @@ export const timestampToBytes = (timestamp:any) => {
 
      return Uint8Array.from(fullHash.digest());
  }
-
-

@@ -60,6 +60,24 @@ describe('solstory hashlist test', async () => {
       const mintResp = await actions.mintNFT(mintNFTArgs);
       mint = mintResp.mint;
       console.log("hashlist NFT mint", mint);
+      const [solstoryPda, _nonce2] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory_pda"))],
+        program.programId
+      ); //TODO: library function for this
+
+      try {
+      await program.rpc.initialize({
+          accounts:{
+            solstoryPda: solstoryPda,
+            authority: program.provider.wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          },
+          signers:[program.provider.wallet.payer]
+      });
+      } catch(e) {
+      console.warn("init failed with ", e);
+      }
 
 
       const [_writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
@@ -75,6 +93,7 @@ describe('solstory hashlist test', async () => {
           writerMetadataPda: writerMetadataPda,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          solstoryPda: solstoryPda,
         }
 
       return program.rpc.createWriterMetadata(

@@ -6,10 +6,8 @@ import { PublicKey } from "@solana/web3.js";
 import { useState } from 'react';
 import { popupAtom, solstoryProgramAtom } from '../state';
 import { useRecoilValue } from 'recoil';
-const TMP_TEST_KEY = new PublicKey('CYfwu9BtsSCnUqtxt72gujfr4j2WWiimPd5y9tM34CwP');
 export function WalletBrowser() {
-    var f = 'f';
-    const [searchPubkey, setSearchPubkey] = useState(TMP_TEST_KEY);
+    const [searchPubkey, setSearchPubkey] = useState(undefined);
     const [isError, setIsError] = useState({ error: false });
     const popupItem = useRecoilValue(popupAtom);
     // const wallet = useAnchorWallet();
@@ -22,6 +20,7 @@ export function WalletBrowser() {
         const text = e.target.value;
         if (text.length !== 44) {
             setIsError({ error: true });
+            setSearchPubkey(undefined);
         }
         else {
             setIsError({ error: false });

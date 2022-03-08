@@ -14,6 +14,20 @@ export class SolstoryCommonAPI {
   constructor(program:Program) {
     this.program = program;
   }
+  /**
+   * Grab the PDA address for the solstory program
+   *
+   * @param writerKey the pubkey of the writer program
+   **/
+  async getSolstoryPda(): Promise<PublicKey> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory_pda"))],
+      this.program.programId
+    ).then((value: [solstoryPda:PublicKey, _nonce:number]) => {
+      return value[0];
+    });
+  }
+
 
   /**
    * Grab the PDA address for the metadata of a writer program.
@@ -56,6 +70,11 @@ export class SolstoryCommonAPI {
     ).then((value: [writerHeadKey:PublicKey, _nonce:number]) => {
       return value[0];
     });
+  }
+
+  async uploadSolstoryItem(itemJson: string) {
+
+
   }
 }
 

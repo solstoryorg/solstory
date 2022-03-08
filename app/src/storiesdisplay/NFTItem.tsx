@@ -45,7 +45,7 @@ export function NFTItem(props: {nft: any}) {
 
   const renderExtMetadata = (extMetadata) => {
     if (extMetadata == undefined)
-      return 'spinny';
+      return 'loading...';
     return (
       <Paper sx={{display: 'flex', aspectRatio: 1.0, height:1.0, cursor: "pointer"}} onClick={(e)=>popup(e)} title={extMetadata.description}>
           <Box sx={{display: 'inline-flex', maxWidth:0.3, m:1}} component="img" src={extMetadata.image}/>

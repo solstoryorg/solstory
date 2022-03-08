@@ -20,7 +20,8 @@
     "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "outDir": "dist/esm"
+    "outDir": "dist/esm",
+    "composite": true
   },
   "files": ["src/programs/solstory.json"],
   "include": ["src/**/*"]

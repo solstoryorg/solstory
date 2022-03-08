@@ -76,8 +76,14 @@ pub struct WriterMetadata {
     //for NFT owner
     // This can be a program _or_ an authorizing key.
     pub writer_key: Pubkey, //this is used for the memcpy search
-    // This is used for the Writer Key themselves to set something invis
+    // This is used for the Writer Program to determine if users should see this log
     pub visible: bool,
+    // Marks programs that have been validated by solstory org
+    pub system_validated: bool,
+    // Filter against bad actors, API misuse, etc.
+    pub system_banned: bool,
+    // Marks different versions of the API.
+    pub api_version: u8,
 
 
     //for writer, semi-static
@@ -88,7 +94,7 @@ pub struct WriterMetadata {
     pub cdn: String, // 192, //semi static
     pub base_url: String, //192 only meaningful in cases where AccessType=URL
 
-    pub metadata: String, // 192 url location of additional metadata
+    pub metadata: String, // 192 metadata
 
     //TODO: Determine metadata PDA standard
     pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.

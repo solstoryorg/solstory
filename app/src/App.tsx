@@ -103,7 +103,7 @@ function GlobalState (props) {
 }
 
 const Content = () => {
-  const { publicKey }= useWallet();
+  const { publicKey, signMessage, sendTransaction }= useWallet();
   const anchorWallet = useAnchorWallet();
   const setSolstoryProgram = useSetRecoilState(solstoryProgramAtom);
   useEffect(() => {
@@ -111,11 +111,11 @@ const Content = () => {
       console.log("undefined wallet, aborting");
       return;
     }
-    console.log("attmepting to create provider")
     const conn = new Connection(RPC_ENDPOINT_URL);
-    console.log("wow we skipped it")
     const solstoryProgram = new SolstoryAPI({}, new Provider(conn, anchorWallet, {}) );
     console.log(solstoryProgram);
+
+    solstoryProgram.configureBundlrWeb(signMessage, sendTransaction)
     setSolstoryProgram(solstoryProgram);
 
   },

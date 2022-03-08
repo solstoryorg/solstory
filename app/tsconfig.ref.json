@@ -1,6 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "include": ["src/**/*"],
+  "references": [
+    {
+      "path": "../api/tsconfig.ref.json"
+    }
+  ],
   "compilerOptions": {
     "composite": true
   }

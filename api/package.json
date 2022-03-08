@@ -4,13 +4,21 @@
     "type": "module",
     "description": "SolStory API",
     "private": false,
-    "main": "dist/cjs/src/index.js",
-    "module": "dist/esm/src/index.js",
-    "types": "dist/esm/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/cjs/src/index.js",
+            "import": "./dist/esm/src/index.js",
+            "types": "./dist/esm/src/index.d.ts"
+        }
+    },
+    "main": "./dist/cjs/src/index.js",
+    "module": "./dist/esm/src/index.js",
+    "types": "./dist/esm/src/index.d.ts",
     "typesVersions": {
         "*": {
             "/*": [
-                "dist/esm/*"
+                "./dist/esm/*",
+                "./dist/cjs/*"
             ]
         }
     },
@@ -18,11 +26,12 @@
         "test": "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts",
         "pre-build": "cp ../target/idl/solstory.json src/programs/solstory.json",
         "build": "yarn run pre-build; yarn build:esm && yarn build:cjs",
-        "build:esm": "tsc",
+        "build:esm": "tsc --module es2020 --outDir dist/esm",
         "build:cjs": "tsc --module commonjs --outDir dist/cjs",
         "watch": "yarn run pre-build; tsc --watch"
     },
     "dependencies": {
+        "@bundlr-network/client": "^0.5.18",
         "@emotion/react": "^11.7.1",
         "@emotion/styled": "^11.6.0",
         "@metaplex-foundation/amman": "^0.0.9",
@@ -30,8 +39,10 @@
         "@metaplex/js": "^4.11.7",
         "@mui/material": "^5.4.0",
         "@project-serum/anchor": "^0.22.0",
+        "@solana/buffer-layout": "^4.0.0",
         "@types/chai": "^4.3.0",
         "axios": "^0.26.0",
+        "browser-or-node": "^2.0.0",
         "commonjs": "^0.0.1",
         "crypto": "^1.0.1",
         "sinon": "^12.0.1",

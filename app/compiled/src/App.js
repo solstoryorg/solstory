@@ -56,7 +56,7 @@ function GlobalState(props) {
     return (_jsx(WalletProvider, Object.assign({ wallets: wallets, onError: onError, autoConnect: true }, { children: _jsx(WalletDialogProvider, { children: props.children }, void 0) }), void 0));
 }
 const Content = () => {
-    const { publicKey } = useWallet();
+    const { publicKey, signMessage, sendTransaction } = useWallet();
     const anchorWallet = useAnchorWallet();
     const setSolstoryProgram = useSetRecoilState(solstoryProgramAtom);
     useEffect(() => {
@@ -64,11 +64,10 @@ const Content = () => {
             console.log("undefined wallet, aborting");
             return;
         }
-        console.log("attmepting to create provider");
         const conn = new Connection(RPC_ENDPOINT_URL);
-        console.log("wow we skipped it");
         const solstoryProgram = new SolstoryAPI({}, new Provider(conn, anchorWallet, {}));
         console.log(solstoryProgram);
+        solstoryProgram.configureBundlrWeb(signMessage, sendTransaction);
         setSolstoryProgram(solstoryProgram);
     }, [publicKey]);
     return (_jsxs(Container, Object.assign({ maxWidth: "md" }, { children: [_jsxs(Box, Object.assign({ sx: { my: 4 } }, { children: [_jsx(Typography, Object.assign({ variant: "h4", component: "h1", gutterBottom: true }, { children: "Create React App example with TypeScript" }), void 0), _jsx(ProTip, {}, void 0)] }), void 0), _jsx(Box, Object.assign({ sx: { display: "flex", justifyContent: "center", margin: 4 } }, { children: _jsx(WalletMultiButton, {}, void 0) }), void 0), _jsx(Box, { children: " " }, void 0), _jsx(Box, { children: _jsx(TabContainer, {}, void 0) }, void 0), _jsx(Box, Object.assign({ sx: { margin: 2 } }, { children: _jsx(Copyright, {}, void 0) }), void 0)] }), void 0));

@@ -40,6 +40,11 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "solstoryPda",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -50,6 +55,32 @@
           }
         }
       ]
+    },
+    {
+      "name": "deleteWriterMetadata",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "writerMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "solstoryPda",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
       "name": "createWriterHeadWriter",
@@ -328,6 +359,18 @@
           {
             "name": "visible",
             "type": "bool"
+          },
+          {
+            "name": "systemValidated",
+            "type": "bool"
+          },
+          {
+            "name": "systemBanned",
+            "type": "bool"
+          },
+          {
+            "name": "apiVersion",
+            "type": "u8"
           },
           {
             "name": "label",

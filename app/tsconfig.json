@@ -13,7 +13,14 @@
     "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "declaration":true,
-    "outDir": "compiled"
+    // "noImplicitAny": false, //temporary fix for isseu where metaplex depends on spl-token 1.8.0 which depends on buffer-layout which doesn't have types. Sigh.
+    "outDir": "compiled",
+    "composite": true
   },
-  "include": ["src/**/*.tsx"]
+  "references": [
+    {
+      "path": "../api/tsconfig.json"
+    }
+  ],
+  "include": ["src/**/*"]
 }

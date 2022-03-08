@@ -38,7 +38,7 @@ export function NFTItem(props) {
     };
     const renderExtMetadata = (extMetadata) => {
         if (extMetadata == undefined)
-            return 'spinny';
+            return 'loading...';
         return (_jsxs(Paper, Object.assign({ sx: { display: 'flex', aspectRatio: 1.0, height: 1.0, cursor: "pointer" }, onClick: (e) => popup(e), title: extMetadata.description }, { children: [_jsx(Box, { sx: { display: 'inline-flex', maxWidth: 0.3, m: 1 }, component: "img", src: extMetadata.image }, void 0), _jsx(Box, Object.assign({ sx: { display: 'inline-flex', maxWidth: 0.7, m: 1 } }, { children: _jsx(Typography, Object.assign({ variant: "h6" }, { children: extMetadata.name }), void 0) }), void 0)] }), void 0));
     };
     console.log(props.nft);

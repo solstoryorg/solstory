@@ -45,8 +45,16 @@ pub mod solstory {
             (*ctx.accounts.writer_metadata_pda).metadata_extended = true;
         }
         (*ctx.accounts.writer_metadata_pda).metadata =  data.metadata;
+        (*ctx.accounts.solstory_pda).writers += 1;
 
         Ok(())
+    }
+
+    pub fn delete_writer_metadata(ctx: Context<DeleteWriterMetadata>) -> Result<()> {
+        (*ctx.accounts.solstory_pda).writers -= 1;
+
+        Ok(())
+
     }
 
 
@@ -294,6 +302,20 @@ pub struct CreateWriterMetadata<'info> {
     #[account(init, payer=writer_program, space=WRITER_ACCOUNT_LEN, seeds = [b"solstory", writer_program.key().as_ref()], bump)]
     writer_metadata_pda: Account<'info, WriterMetadata>,
     system_program: Program<'info, System>,
+    #[account(mut, seeds=[b"solstory_pda"], bump)]
+    solstory_pda: Account<'info, SolstoryPDA>,
+}
+
+#[derive(Accounts)]
+pub struct DeleteWriterMetadata<'info> {
+    /// CHECK: we only use this to get a program id
+    #[account(mut, signer)]
+    writer_program: AccountInfo<'info>,
+    #[account(mut, close=writer_program, seeds = [b"solstory", writer_program.key().as_ref()], bump)]
+    writer_metadata_pda: Account<'info, WriterMetadata>,
+    system_program: Program<'info, System>,
+    #[account(mut, seeds=[b"solstory_pda"], bump)]
+    solstory_pda: Account<'info, SolstoryPDA>,
 }
 
 #[derive(Accounts)]

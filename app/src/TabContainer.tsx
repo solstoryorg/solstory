@@ -9,6 +9,7 @@ import {
   useRecoilValue,
 } from 'recoil';
 
+import { NFTBrowser } from './storiesdisplay';
 import { WalletBrowser } from './storiesdisplay';
 import { WritersTab } from './storiesdisplay';
 import { solstoryProgramAtom } from './state';
@@ -21,13 +22,10 @@ export function TabContainer (props) {
   const solstoryProgram = useRecoilValue(solstoryProgramAtom);
 
   useEffect(() => {
-    console.log("ATTEMPTED EFFECT USE");
     if (solstoryProgram != undefined) {
-      console.log("SUCCESSFUL EFFECT USE");
       setLoading(true);
       solstoryProgram.client.getAllMetadata()
       .then((blah)=>{
-        console.log("output", blah)
         setWriters(blah);
         setLoading(false);
       });
@@ -62,14 +60,19 @@ export function TabContainer (props) {
   return (
     <Box>
       <Tabs value={tabValue} onChange={handleTabClick}>
+        <Tab label="NFT Browser" />
         <Tab label="Wallet Browser" />
         <Tab label="Writer Program Browser" />
       </Tabs>
       <TabPanel value={tabValue} index = {0}>
 
-        <WalletBrowser/>
+        <NFTBrowser/>
       </TabPanel>
       <TabPanel value={tabValue} index = {1}>
+
+        <WalletBrowser/>
+      </TabPanel>
+      <TabPanel value={tabValue} index = {2}>
         <WritersTab loading={loading} writers={writers}/>
       </TabPanel>
 

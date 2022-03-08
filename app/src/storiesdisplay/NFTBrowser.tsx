@@ -2,19 +2,24 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
-import { WalletNFTs } from './WalletNFTs';
 import { PublicKey, Keypair, SystemProgram, Connection, TokenAccountsFilter } from "@solana/web3.js";
 import { useState, useEffect } from 'react';
-import { popupAtom, solstoryProgramAtom } from '../state';
 import { atom, useRecoilValue } from 'recoil';
+import { popupAtom, solstoryProgramAtom } from '../state';
+import { WalletNFTs } from './WalletNFTs';
+import { NFTItem } from './NFTItem';
 
 
-export function WalletBrowser() {
+export function NFTBrowser() {
   const [searchPubkey, setSearchPubkey] = useState(undefined);
   const [isError, setIsError] = useState({error: false});
   const popupItem = useRecoilValue(popupAtom);
-  // const wallet = useAnchorWallet();
-  const solstoryProgram = useRecoilValue(solstoryProgramAtom);
+
+  const renderNFTItem = () => {
+    if(searchPubkey){
+      return <NFTItem nft={searchPubkey}/>
+    }
+  }
 
   const renderPopup = () =>{
 
@@ -29,6 +34,7 @@ export function WalletBrowser() {
       setSearchPubkey(undefined);
     } else {
       setIsError({error: false});
+      console.log("setting search pubkey!");
       setSearchPubkey(new PublicKey(text));
     }
 
@@ -41,11 +47,12 @@ export function WalletBrowser() {
   return (
     <Box>
       <Box>
-       <TextField id="wallet-picker" label="Wallet Address" {...isError} variant="outlined" onChange={updateChange}/>
+       <TextField id="wallet-picker" label="NFT Mint Address" {...isError} variant="outlined" onChange={updateChange}/>
       </Box>
-      <WalletNFTs pubkey={searchPubkey}/>
+      {renderNFTItem()}
       {renderPopup()}
     </Box>
   );
 };
+
 

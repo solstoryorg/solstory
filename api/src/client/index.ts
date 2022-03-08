@@ -1,7 +1,7 @@
 import { ProgramAccount, Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
 import axios from 'axios';
 import * as api from '../';
-import { Metadata, AccessType, VisibilityOverride, Head, Item } from '../common/types'
+import { Metadata, AccessType, VisibilityOverride, SolstoryHead, SolstoryItem } from '../common/types'
 
 
 /**
@@ -73,7 +73,7 @@ export class SolstoryClientAPI {
     })
   }
 
-  getHeadsForNFT(nft:any): Promise<Head[]> {
+  getHeadsForNFT(nft:any): Promise<SolstoryHead[]> {
     // check for cache expiration
     if  (Date.now()-(1000*this.program.cacheTimeout) > this.program.metadataCache.lastAll ){
       //this will refresh the cache

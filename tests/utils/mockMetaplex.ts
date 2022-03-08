@@ -59,6 +59,7 @@ const uri =
   'https://bafkreibj4hjlhf3ehpugvfy6bzhhu2c7frvyhrykjqmoocsvdw24omfqga.ipfs.dweb.link';
 
 const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = undefined) => {
+  console.log("ATTEMPTING MOCK");
   const mockedResponse = {
     data: {
       name: 'Holo Design (0)',
@@ -82,6 +83,7 @@ const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = unde
     headers: {},
     config: {},
   };
+  console.dir(mockedResponse, {depth: 10});
   if (secondSigner) {
     mockedResponse.data.properties.creators.push({
       address: secondSigner.publicKey.toString(),
@@ -89,6 +91,7 @@ const mockAxios200 = (wallet: Wallet[], secondSigner: Keypair | undefined = unde
       share: 0,
     });
   }
+  // This will fail if the the primary axios package is not the one requested by @metaplex/js.
   sinon.stub(axios, "get").resolves(Promise.resolve(mockedResponse));
 };
 
