@@ -429,11 +429,11 @@
             }
           },
           {
-            "name": "uuid",
+            "name": "objId",
             "type": {
               "array": [
                 "u8",
-                16
+                32
               ]
             }
           },
@@ -535,6 +535,15 @@
           },
           {
             "name": "newHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "id",
             "type": {
               "array": [
                 "u8",

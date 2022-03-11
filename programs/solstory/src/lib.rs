@@ -101,7 +101,7 @@ pub mod solstory {
         (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
         // (*ctx.accounts.writer_pda).uri =  String::new();
-        (*ctx.accounts.writer_head_pda).uuid =  [0; 16];
+        (*ctx.accounts.writer_head_pda).obj_id =  [0; 32];
         (*ctx.accounts.writer_head_pda).current_hash =  [0; 32];
 
         Ok(())
@@ -134,7 +134,7 @@ pub mod solstory {
         (*ctx.accounts.writer_head_pda).authorized = true;
         (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
 
-        (*ctx.accounts.writer_head_pda).uuid = [0; 16];
+        (*ctx.accounts.writer_head_pda).obj_id = [0; 32];
         (*ctx.accounts.writer_head_pda).current_hash = [0; 32];
 
         Ok(())
@@ -438,7 +438,7 @@ pub struct ExtAppendData {
     pub data_hash: [u8; 32],    // hash of block data
     pub prev_hash: [u8; 32],    // hash of the last blocks timestamp, data, and prev_hash
     pub new_hash: [u8; 32],     // verification step for safety
-    // pub uri: String,            // uri of current block - preferably in permanent storage
+    pub id: [u8; 32],            // uri of current block - preferably in permanent storage
 }
 
 #[derive(Accounts)]

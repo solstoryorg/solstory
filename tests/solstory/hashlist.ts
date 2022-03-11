@@ -170,6 +170,7 @@ describe('solstory hashlist test', async () => {
       dataHash: dataHash,
       prevHash: oldHash,
       newHash: newHash,
+      objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
     }
 
     const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(

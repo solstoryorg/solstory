@@ -1,11 +1,16 @@
 import * as utils from "./utils/index";
 import { isBrowser, isNode } from "browser-or-node";
-import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
+import { Program, Idl, Provider, Coder } from '@project-serum/anchor';
 import { SolstoryClientAPI } from './client'
 import { SolstoryServerAPI } from './server'
 import { SolstoryCommonAPI } from './common'
-import { Metadata, AccessType, VisibilityOverride, SolstoryHead, SolstoryItem } from './common/types'
-import { SOLSTORY_PUBKEY, BUNDLR_NODE_URL } from './constants'
+import {
+  Metadata,
+  SolstoryItemInner,
+  SolstoryItemType,
+  UpdateHeadData
+} from './common/types'
+import { SOLSTORY_PUBKEY, BUNDLR_NODE_URL, BUNDLR_DEVNET_URL } from './constants'
 import Bundlr, { WebBundlr } from '@bundlr-network/client';
 // import * as fs from 'fs';
 
@@ -36,7 +41,7 @@ type MetadataCache = {
  * server tasks.
  *
  */
-export class SolstoryAPI extends Program<Idl> {
+class SolstoryAPI extends Program<Idl> {
   client: SolstoryClientAPI;
   server: SolstoryServerAPI;
   common: SolstoryCommonAPI;
@@ -75,20 +80,40 @@ export class SolstoryAPI extends Program<Idl> {
     }
   }
 
-  //node bundlr expects a string or uint8 of the secret key
-  public configureBundlrServer(secretKey: Uint8Array|string) {
+  /**
+   * @param fundingSecretKey node bundlr expects a string or uint8 of the secret key to use for funding. Please supply it here.
+   * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
+   */
+  public configureBundlrServer(fundingSecretKey: Uint8Array|string, bundlrNetwork: string) {
       if(!isNode) {
         console.warn("Unfamiliar environment, running as if it's node but behavior might not work as expected")
       }
 
-      this.bundlr = new Bundlr(BUNDLR_NODE_URL, "solana", secretKey);
+      if(bundlrNetwork=="devnet")
+        bundlrNetwork = BUNDLR_DEVNET_URL;
+      if(bundlrNetwork=="mainnet")
+        bundlrNetwork = BUNDLR_NODE_URL;
+
+      this.bundlr = new Bundlr(bundlrNetwork.toString(), "solana", fundingSecretKey);
       this.bundlrReady=true;
   }
 
-  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>, sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>) {
+  /**
+   * @param signMessage bundlr needs to sign messages to validate client side transactions, the function to do this can be found in useWallet of the @solana-labs/wallet-adapter github repo.
+   * @param sendTransaction bundlr needs to sendTransactions to validate client side transactions, the function to do this can be found in useWallet of the @solana-labs/wallet-adapter github repo.
+   * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
+   */
+
+  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>, sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>, bundlrNetwork: string) {
       if (!isBrowser){
         throw "Failed to detect browser environment, please use the other bundlr configuration function"
       }
+
+      if(bundlrNetwork=="devnet")
+        bundlrNetwork = BUNDLR_DEVNET_URL;
+      if(bundlrNetwork=="mainnet")
+        bundlrNetwork = BUNDLR_NODE_URL;
+
       const bundlrobj = {
                                     signMessage: signMessage,
                                     sendTransaction: sendTransaction,
@@ -102,7 +127,7 @@ export class SolstoryAPI extends Program<Idl> {
   }
 
 }
-export type { SolstoryItem, } ;
+export type { SolstoryItemInner, UpdateHeadData } ;
 
-export default { SolstoryAPI, utils }
+export { SolstoryAPI, SolstoryItemType, utils }
 

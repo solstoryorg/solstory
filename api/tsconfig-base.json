@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "types": ["mocha", "chai"],
+    "typeRoots": ["../node_modules/@types"],
+    "lib": ["es2021", "DOM", "DOM.Iterable"],
+    "baseUrl": "src",
+    "rootDir": "src",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "pretty": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "outDir": "dist/esm",
+    "composite": true
+  },
+  "files": ["src/programs/solstory.json"],
+  "include": ["src/**/*"]
+}
+

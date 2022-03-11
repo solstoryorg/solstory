@@ -1,7 +1,7 @@
 import { ProgramAccount, Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
 import axios from 'axios';
 import * as api from '../';
-import { Metadata, AccessType, VisibilityOverride, SolstoryHead, SolstoryItem } from '../common/types'
+import { Metadata, AccessType, VisibilityOverride, SolstoryHead, SolstoryItemContainer } from '../common/types'
 
 
 /**

@@ -1,4 +1,4 @@
-
+import { BUNDLR_NODE_URL, BUNDLR_DEVNET_URL } from '../constants'
 
 export type Metadata = {
   writerKey: string;
@@ -27,6 +27,8 @@ export enum  VisibilityOverride {
   Visible,
   Hidden
 }
+
+// We need to proxy this so we have compatibility with caching.
 export type SolstoryHead = {
   uuid: string, //should be a uuid
   authorized: boolean,
@@ -40,29 +42,36 @@ export type UpdateHeadData = {
   dataHash: Uint8Array,
   prevHash: Uint8Array,
   newHash: Uint8Array
-  objId: string,
+  objId: Uint8Array,
 }
 
-export enum SolstoryItemTypes {
+export enum SolstoryItemType {
   Item, // Just a regular event added to the hashlist
   Correction, // Correction of a previous item
 }
 
-export type SolstoryItem = {
-  verified: {
+export type SolstoryItemInner = {
+    type: SolstoryItemType;
+    ref?: string, //item it refers to (for corrections)
     display?: {
       img?: string;
       label?: string;
-      long_descripton?: string;
-      help_text?: string;
+      description?: string;
+      helpText?: string;
     }
-    ref?: string, //item it refers to (for corrections)
     data: any;
-  }
-  next: {
-    uri: string;
-    hash: string;
-  }
 }
 
+export type SolstoryItemContainer = {
+  verified: {
+    item: SolstoryItemInner,
+    itemHash: string;
+    prevHash: string;
+    timestamp: number; //unix timestamp, not javascript
+  }
+  hash: string;
+  next: {
+    uri: string;
+  }
+}
 

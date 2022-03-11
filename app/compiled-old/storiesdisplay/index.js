@@ -1,1 +1,0 @@
-export { WalletBrowser } from './WalletBrowser';

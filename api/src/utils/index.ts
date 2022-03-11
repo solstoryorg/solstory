@@ -1,11 +1,6 @@
-import * as crypto from 'crypto';
+import sha256 from 'crypto-js/sha256';
+import CryptoJS from 'crypto-js';
 import * as anchor from '@project-serum/anchor';
-import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder, Wallet } from '@project-serum/anchor';
-import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
-import { SOLSTORY_PUBKEY } from '../constants';
-import nacl from 'tweetnacl';
-import { AnchorWallet } from '@solana/wallet-adapter-react'
-import bs58 from 'bs58';
 
 /* Hash function */
 
@@ -18,17 +13,46 @@ export const timestampToBytes = (timestamp:any) => {
     return byteTime;
 }
 
- export const solstoryHash = (timestamp: anchor.BN, data_hash: Uint8Array, prev_hash: Uint8Array) => {
+export const simpleHash = (input:string) => {
+    const hash = sha256(CryptoJS.enc.Hex.parse(input)).toString();
 
-     const timeHash = crypto.createHash('sha256');
-     const fullHash = crypto.createHash('sha256');
+    return hash
+}
+
+ export const solstoryHash = (timestamp: anchor.BN|number, data_hash: Uint8Array|string, prev_hash: Uint8Array|string) => {
+
+     if(typeof data_hash == "string"){
+         data_hash = Uint8Array.from(Buffer.from(data_hash, 'hex'));
+     }
+     if(typeof prev_hash == "string"){
+         prev_hash = Uint8Array.from(Buffer.from(prev_hash, 'hex'));
+     }
+     if(typeof timestamp == "number"){
+         timestamp = new anchor.BN(timestamp);
+     }
+
+     const u8ToWords = (u8: Uint8Array) => {
+         const hexstring = Buffer.from(u8).toString('hex');
+         const words = CryptoJS.enc.Hex.parse(hexstring)
+         return words;
+     }
+
+     const u8FromHashOut = (out:any) => {
+         const hexstring = out.toString();
+         const buff = Buffer.from(hexstring, 'hex');
+         const u8 = Uint8Array.from(buff);
+         return u8;
+
+     }
+
+
 
      const timestampBytes = timestampToBytes(timestamp);
-     timeHash.update(timestampBytes);
-     const timestampHash = Uint8Array.from(timeHash.digest())
+     const timeHash = sha256(u8ToWords(timestampBytes));
+
+     const timestampHash = u8FromHashOut(timeHash);
 
      const full = new Uint8Array([...timestampHash, ...data_hash, ...prev_hash]);
-     fullHash.update(full)
 
-     return Uint8Array.from(fullHash.digest());
+     return u8FromHashOut(sha256(u8ToWords(full)))
  }

@@ -2,8 +2,10 @@ import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@projec
 import * as anchor from '@project-serum/anchor';
 import * as api from '../';
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
-import { Metadata, UpdateHeadData, SolstoryHead, SolstoryItem } from '../common/types';
+import { Metadata, UpdateHeadData, SolstoryItemContainer, SolstoryItemInner, SolstoryItemType } from '../common/types';
+import { simpleHash, solstoryHash } from '../utils';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import ARWeave from 'arweave';
 
 /*
  * This class is for API calls that you would use as the writer program. They'll
@@ -129,7 +131,7 @@ export class SolstoryServerWriterAPI {
 
   }
 
-  async uploadItemBundlr(item:SolstoryItem):Promise<string> {
+  async uploadItemBundlr(item:SolstoryItemContainer):Promise<string> {
     if(this.program.bundlr == undefined || !this.program.bundlrReady){
       return Promise.reject("bundlr not initialized");
     }
@@ -161,13 +163,66 @@ export class SolstoryServerWriterAPI {
       return id;
     });
 
-
   }
 
+  async appendItem(mintId: PublicKey, item:SolstoryItemInner){
+    //get prev item
+    const timestamp = Math.floor(Date.now()/1000)
+    const dataHash = simpleHash(JSON.stringify(item));
 
-  // async updateSolstoryHead(mintId:PublicKey, data: UpdateHeadData): Promise<string> {
+    const headPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
+    const headAct = await this.program.account.writerHead.fetch(headPda)
+    const newHash = solstoryHash(timestamp, dataHash, headAct.currentHash)
 
-  // }
+    const fullItem:SolstoryItemContainer = {
+      verified: {
+        item: item,
+        itemHash: dataHash,
+        prevHash: headAct.currentHash,
+        timestamp: timestamp,
+      },
+      hash: Buffer.from(newHash).toString('hex'),
+      next: {
+        uri: headAct.uuid,
+      }
+    };
+
+    const url = await this.uploadItemBundlr(fullItem);
+    const objId = ARWeave.utils.b64UrlToBuffer(url);
+
+    return this.updateHeadAppend(mintId, fullItem, objId);
+
+
+  }
+  async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData|SolstoryItemContainer, objId?:Uint8Array): Promise<string> {
+      let cleanData:UpdateHeadData;
+
+      // if objid is undefined, we assume it's a solstory item
+      if ((data as UpdateHeadData).objId == undefined) {
+          if(objId == undefined)
+              throw Error('ID is required when data is a solstoryitem')
+
+          const solItem = data as SolstoryItemContainer;
+          cleanData = {
+              timestamp: solItem.verified.timestamp,
+              dataHash: Uint8Array.from(Buffer.from(solItem.verified.itemHash, 'hex')),
+              prevHash: Uint8Array.from(Buffer.from(solItem.verified.prevHash, 'hex')),
+              newHash: Uint8Array.from(Buffer.from(solItem.hash, 'hex')),
+              objId: objId as Uint8Array,
+          }
+      } else {
+        cleanData = data as UpdateHeadData;
+      }
+
+      const writerHeadPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
+      return this.program.rpc.extAppend(cleanData, {
+        accounts: {
+          writerProgram: this.writerKey,
+          tokenMint: mintId,
+          writerHeadPda: writerHeadPda,
+        },
+      });
+  }
 
   // async appendItemARDrive(mintId: PublicKey, data_obj: any): Promise<string> {
   // }

@@ -137,7 +137,7 @@ pub struct WriterHead {
 
     //keeping access type in head allows for multiple types of nodes
     pub access_type: AccessType,
-    pub uuid: [u8; 16],
+    pub obj_id: [u8; 32],
     pub current_hash: [u8; 32],
 }
 
