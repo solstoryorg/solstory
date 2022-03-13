@@ -543,7 +543,13 @@
             }
           },
           {
-            "name": "id",
+            "name": "accessType",
+            "type": {
+              "defined": "AccessType"
+            }
+          },
+          {
+            "name": "objId",
             "type": {
               "array": [
                 "u8",
@@ -560,13 +566,13 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "ArDrive"
+            "name": "Ardrive"
           },
           {
-            "name": "URL"
+            "name": "Url"
           },
           {
-            "name": "PDA"
+            "name": "Pda"
           }
         ]
       }

@@ -34,7 +34,9 @@ export class SolstoryCommonAPI {
    *
    * @param writerKey the pubkey of the writer program
    **/
-  async getWriterMetadataPda(writerKey: PublicKey): Promise<PublicKey> {
+  async getWriterMetadataPda(writerKey: PublicKey|string): Promise<PublicKey> {
+    if(typeof writerKey == "string")
+        writerKey = new PublicKey(writerKey);
     return PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerKey.toBuffer()],
       this.program.programId
@@ -48,7 +50,9 @@ export class SolstoryCommonAPI {
    *
    * @param writerKey the pubkey of the writer program
    **/
-  async getWriterExtendedMetadataPda(writerKey: PublicKey): Promise<PublicKey> {
+  async getWriterExtendedMetadataPda(writerKey: PublicKey|string): Promise<PublicKey> {
+    if(typeof writerKey == "string")
+        writerKey = new PublicKey(writerKey);
     return PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerKey.toBuffer()],
       this.program.programId
@@ -63,7 +67,11 @@ export class SolstoryCommonAPI {
    * @param writerKey the pubkey of the writer program
    * @param mintKey the mint of the NFT – this is the same one you would use for metaplex metadata.
    **/
-  async getWriterHeadPda(writerKey: PublicKey, mintKey: PublicKey): Promise<PublicKey> {
+  async getWriterHeadPda(writerKey: PublicKey|string, mintKey: PublicKey|string): Promise<PublicKey> {
+    if(typeof writerKey == "string")
+        writerKey = new PublicKey(writerKey);
+    if(typeof mintKey == "string")
+        mintKey = new PublicKey(mintKey);
     return PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mintKey.toBuffer(), writerKey.toBuffer()],
       this.program.programId

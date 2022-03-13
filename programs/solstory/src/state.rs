@@ -15,6 +15,7 @@ pub const WRITER_ACCOUNT_LEN:usize = 8 +
 (192 * 4) + // url, logo, cdn, uri
 32*2 + // the two hashes
 280 + //Tweet length metadata
+1000+
 1; //Extended metadata
 
 
@@ -58,13 +59,14 @@ pub struct SolstoryPDA {
 // Make sure to upgrade typescript enum when changing this
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
 pub enum AccessType {
-    ArDrive,
-    URL,
-    PDA,
+    Ardrive,
+    Url,
+    Pda,
+    None,
 }
 
 impl Default for AccessType {
-    fn default() -> Self { AccessType::URL }
+    fn default() -> Self { AccessType::None }
 }
 
 //only writer-program can modify
@@ -74,17 +76,16 @@ impl Default for AccessType {
 #[derive(Default)]
 pub struct WriterMetadata {
     //for NFT owner
-    // This can be a program _or_ an authorizing key.
-    pub writer_key: Pubkey, //this is used for the memcpy search
-    // This is used for the Writer Program to determine if users should see this log
+    // This is the public key representing the writer.
+    pub writer_key: Pubkey,
+    // This is used for the Writer Program to determine if users should see this
+    // A writer program storing progress information for a video game, for example,
+    // might set this to false.
     pub visible: bool,
-    // Marks programs that have been validated by solstory org
+    // Marks programs that have been validated by solstory org. Protection against
+    // spam, phishing, ect.
     pub system_validated: bool,
-    // Filter against bad actors, API misuse, etc.
-    pub system_banned: bool,
-    // Marks different versions of the API.
     pub api_version: u8,
-
 
     //for writer, semi-static
     pub label: String, // 128
@@ -101,22 +102,8 @@ pub struct WriterMetadata {
 }
 
 /*
- * In theory we can just put this in the spec and then
- * allow wallets to hard override in local _but_ we want to make things
- * as on chain as possible and this is relatively cheap for us to implement.
+ * Head of the hashlist.
  */
-#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
-pub enum HolderOverride {
-    Default,
-    Visible,
-    Hidden,
-}
-
-impl Default for HolderOverride {
-    fn default() -> Self { HolderOverride::Default }
-}
-// only writer-program can modify
-// this is a writer attached to a particular single instance nft (mint)
 // pda('solstory' solstory prog, mintid, writer_program)
 #[account]
 #[derive(Default)]
@@ -126,17 +113,26 @@ pub struct WriterHead {
     // an NFT by iterating through every single program via getMultipleAccounts
     //
     // Even up to 10^3 writer programs, I'd rather send 10x more requests (10x 100 acts per
-    // request vs a single prog-accts-filter-on-buffer) than increase cost of storage by 50%.
+    // request vs a single prog-accts-filter-on-buffer) than increase cost of storage by ~35%.
     //
-    // Incidentally: CDN based workflow solves for this!
+    // This should only be a fallback anyway, since we _should_ be using a CDN for standard
+    // lookups.
+    //
     // pub writer_key: Pubkey, //this is used for the memcpy search
     // pub nft_key: Pubkey, //this is used for the memcpy search
 
     pub authorized: bool,
-    pub visible_override: HolderOverride, //Allow the holder of the NFT to hard-override things.
+
+    // UNDER CONSIDERATION
+    // Holder override allows the holder of the NFT to override settings.
+    // -1 represents hiding something
+    // 0 represents default
+    // 1 represents deliberately making something visible
+    pub visibility_index: i8, //Allow the holder of the NFT to hard-override things.
 
     //keeping access type in head allows for multiple types of nodes
     pub access_type: AccessType,
+    // pub access_type: i32,
     pub obj_id: [u8; 32],
     pub current_hash: [u8; 32],
 }

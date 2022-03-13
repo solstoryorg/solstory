@@ -1,12 +1,25 @@
 import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
+import type { web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
 import * as api from '../';
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
-import { Metadata, UpdateHeadData, SolstoryItemContainer, SolstoryItemInner, SolstoryItemType } from '../common/types';
+import { SolstoryMetadata,
+  UpdateHeadData,
+  SolstoryItemContainer,
+  SolstoryItemInner,
+  SolstoryItemType,
+  AccessType,
+  AccessTypeIndex
+} from '../common/types';
 import { simpleHash, solstoryHash } from '../utils';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import ARWeave from 'arweave';
 
+module SolstoryServerWriterAPI {
+  export type SolstoryApprendItemOptions = {
+    skipInitHeadCheck: boolean;
+  }
+}
 /*
  * This class is for API calls that you would use as the writer program. They'll
  * natively use the wallet the API was initialized with as the writer key.
@@ -30,7 +43,7 @@ export class SolstoryServerWriterAPI {
    * to be called more, please contact me because there's a v2 to make that viable in the architecture.
    * Mass usage ahead of the V2 will not be system validated to avoid degrading API performance.
    */
-  async createWriterMetadata(metadata: Metadata) {
+  async createWriterMetadata(metadata: SolstoryMetadata) {
     const metadataKey = await this.program.common.getWriterMetadataPda(this.writerKey);
     const solstoryPda = await this.program.common.getSolstoryPda();
 
@@ -40,6 +53,9 @@ export class SolstoryServerWriterAPI {
         writerMetadataPda: metadataKey,
         solstoryPda: solstoryPda,
         systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      options: {
+        commitment: "confirmed" as web3.Commitment,
       }
     });
   }
@@ -52,7 +68,7 @@ export class SolstoryServerWriterAPI {
    * doesn't work for your usecase, consider interacting with the RPC manually, see JS tests of the
    * Solstory program for reference.
    */
-  async deleteWriterMetadata(metadata: Metadata) {
+  async deleteWriterMetadata(metadata: SolstoryMetadata) {
     const metadataKey = await this.program.common.getWriterMetadataPda(this.writerKey);
     const solstoryPda = await this.program.common.getSolstoryPda();
 
@@ -73,7 +89,7 @@ export class SolstoryServerWriterAPI {
    * doesn't work for your usecase, consider interacting with the RPC manually, see JS tests of the
    * Solstory program for reference.
    */
-  async updateWriterMetadata(metadata: Metadata) {
+  async updateWriterMetadata(metadata: SolstoryMetadata) {
     const metadataKey = await this.program.common.getWriterMetadataPda(this.writerKey);
 
     return this.program.rpc.updateWriterMetadata(metadata, {
@@ -137,23 +153,35 @@ export class SolstoryServerWriterAPI {
     }
     const json = JSON.stringify(item);
 
+    console.log("bundlr json", json);
+
 
     const price = await this.program.bundlr.getPrice((new TextEncoder().encode(json)).length);
     // Get your current balance
     const balance = await this.program.bundlr.getLoadedBalance();
     console.log("bundlr stuff", price.toString(), balance.toString());
     // If you don't have enough balance for the upload
+    //TODO: temporary testing fix while bundlr has issues.
+    const tmpPrice = 1600;
+    console.log('wtf', price > balance);
+    console.log('wtf', price, balance);
     if (price > balance) {
         // integerValue(0) means round up
         const amount:number = price.minus(balance).multipliedBy(1.1).integerValue(0).toNumber()
+        const tmpAmount = 1600;
         console.log("attempting to increase funding by", amount);
         // Fund your account with the difference
         // We multiply by 1.1 to make sure we don't run out of funds
-        await this.program.bundlr.fund(amount);
+        if(amount == NaN)
+          await this.program.bundlr.fund(tmpAmount);
+        else
+          await this.program.bundlr.fund(amount);
     }
 
+    console.log("funded")
     // Create, sign and upload the transaction
     const transaction = this.program.bundlr.createTransaction(json);
+    console.log("bunldr transaction", transaction);
 
     await transaction.sign();
     const id = transaction.id;
@@ -165,13 +193,42 @@ export class SolstoryServerWriterAPI {
 
   }
 
-  async appendItem(mintId: PublicKey, item:SolstoryItemInner){
+  solstoryItemToUpdateHeadData(solItem: SolstoryItemContainer, objId:Uint8Array, accessType:AccessType): UpdateHeadData{
+      const cleanData = {
+          timestamp: new anchor.BN(solItem.verified.timestamp),
+          dataHash: Uint8Array.from(Buffer.from(solItem.verified.itemHash, 'hex')),
+          prevHash: Uint8Array.from(Buffer.from(solItem.verified.prevHash, 'hex')),
+          newHash: Uint8Array.from(Buffer.from(solItem.hash, 'hex')),
+          objId: objId as Uint8Array,
+          accessType: accessType
+      }
+
+      return cleanData
+
+  }
+
+  async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {skipInitHeadCheck: false}){
     //get prev item
     const timestamp = Math.floor(Date.now()/1000)
     const dataHash = simpleHash(JSON.stringify(item));
 
     const headPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
-    const headAct = await this.program.account.writerHead.fetch(headPda)
+    if(!options.skipInitHeadCheck) {
+
+    }
+    let headAct;
+    try {
+      headAct = await this.program.account.writerHead.fetch(headPda)
+    }catch(err:any) {
+      // Creating a head costs sol, so we give the option to disable it.
+      if(err.message.startsWith("Account does not exist") && !options.skipInitHeadCheck){
+        console.log("head is missing, creating it")
+        await this.createWriterHead(mintId);
+        headAct = await this.program.account.writerHead.fetch(headPda)
+      }else{
+        throw err;
+      }
+    }
     const newHash = solstoryHash(timestamp, dataHash, headAct.currentHash)
 
     const fullItem:SolstoryItemContainer = {
@@ -183,39 +240,26 @@ export class SolstoryServerWriterAPI {
       },
       hash: Buffer.from(newHash).toString('hex'),
       next: {
-        uri: headAct.uuid,
+        objId: headAct.objId,
+        accessType: headAct.accessType,
       }
     };
 
     const url = await this.uploadItemBundlr(fullItem);
     const objId = ARWeave.utils.b64UrlToBuffer(url);
 
-    return this.updateHeadAppend(mintId, fullItem, objId);
+    const headUpdate = this.solstoryItemToUpdateHeadData(fullItem, objId, AccessTypeIndex.ArDrive);
+
+
+    return this.updateHeadAppend(mintId, headUpdate);
 
 
   }
-  async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData|SolstoryItemContainer, objId?:Uint8Array): Promise<string> {
-      let cleanData:UpdateHeadData;
+  async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData): Promise<string> {
 
-      // if objid is undefined, we assume it's a solstory item
-      if ((data as UpdateHeadData).objId == undefined) {
-          if(objId == undefined)
-              throw Error('ID is required when data is a solstoryitem')
-
-          const solItem = data as SolstoryItemContainer;
-          cleanData = {
-              timestamp: solItem.verified.timestamp,
-              dataHash: Uint8Array.from(Buffer.from(solItem.verified.itemHash, 'hex')),
-              prevHash: Uint8Array.from(Buffer.from(solItem.verified.prevHash, 'hex')),
-              newHash: Uint8Array.from(Buffer.from(solItem.hash, 'hex')),
-              objId: objId as Uint8Array,
-          }
-      } else {
-        cleanData = data as UpdateHeadData;
-      }
-
+      console.log("clean data:", data);
       const writerHeadPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
-      return this.program.rpc.extAppend(cleanData, {
+      return this.program.rpc.extAppend(data, {
         accounts: {
           writerProgram: this.writerKey,
           tokenMint: mintId,

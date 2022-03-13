@@ -2,7 +2,7 @@ import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@projec
 import * as anchor from '@project-serum/anchor';
 import * as api from '../';
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
-import { Metadata } from '../common/types';
+import { SolstoryMetadata } from '../common/types';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
 
 /*

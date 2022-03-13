@@ -158,11 +158,11 @@ describe('solstory hashlist test', async () => {
 
     const dataHasher = crypto.createHash('sha256');
     dataHasher.update(Buffer.from(dataContent, 'utf-8'))
-    const dataHash = dataHasher.digest();
+    const dataHash = Uint8Array.from(dataHasher.digest());
 
 
     const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
-    const oldHash = Buffer.from(new Uint8Array(32).fill(0));
+    const oldHash = new Uint8Array(32).fill(0);
     const newHash = solstoryHash(timestamp, dataHash, oldHash);
 
     const data = {
@@ -171,6 +171,9 @@ describe('solstory hashlist test', async () => {
       prevHash: oldHash,
       newHash: newHash,
       objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
+      accessType: {ardrive:{}},
+      // accessType: JSON.stringify({ ardrive: {}})
+      // accessType: {ardrive:{}},
     }
 
     const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
@@ -227,7 +230,62 @@ describe('solstory hashlist test', async () => {
           timestamp: timestamp,
           dataHash: dataHash,
           prevHash: Buffer.from(prevHash),
+          objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
           newHash: newHash,
+          accessType: {ardrive:{}},
+        }
+
+        const acts = {
+            writerProgram: writerWallet.publicKey,
+            tokenMint: mint,
+            writerHeadPda: writerHeadPda,
+          };
+        const tx = program.rpc.extAppend(data,
+         {
+           accounts: acts,
+           signers: [writerWallet.payer],
+         });
+        return tx.then((tx) => {
+          return program.account.writerHead.fetch(writerHeadPda)
+        }).then((wh) => {
+          return wh.currentHash == newHash;
+        });
+      });
+  });
+
+  step('fails to append an incorrect hash', async () => {
+    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+    const writerHeadPda = _writerHeadPda;
+
+    const fakeData = {
+      data: 'more fake data aa',
+    }
+
+    const dataContent = JSON.stringify(fakeData.data);
+
+    const dataHasher = crypto.createHash('sha256');
+    dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+    const dataHash = dataHasher.digest();
+    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+
+    return program.account.writerHead.fetch(writerHeadPda).
+      then((wh) => {
+
+        // lie about the previous hash, in an attempt to redirect the chain
+        const prevHash = dataHash;
+        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(prevHash));
+
+        const data = {
+          timestamp: timestamp,
+          dataHash: dataHash,
+          prevHash: Buffer.from(prevHash),
+          objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
+          newHash: newHash,
+          accessType: {ardrive:{}},
         }
 
         const acts = {

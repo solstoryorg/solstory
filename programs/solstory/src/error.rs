@@ -11,6 +11,8 @@ pub enum SolstoryError {
     HashMismatchError = 7003,
     #[msg("TimestampOutOfRange")]
     TimestampRangeError = 7004,
-    #[msg("Metplaex Deserialization Failure")]
+    #[msg("Metaplaex Deserialization Failure")]
     MetaplexDeserializeError = 7005,
+    #[msg("Invalid Access Type Error")]
+    InvalidAccessTypeError = 7006,
 }

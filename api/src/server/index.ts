@@ -1,8 +1,4 @@
-import { Program, BN, IdlAccounts, Idl, Address, Provider, Coder } from '@project-serum/anchor';
-import * as anchor from '@project-serum/anchor';
 import * as api from '../';
-import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
-import { Metadata } from '../common/types';
 import { SolstoryServerOwnerAPI } from './owner';
 import { SolstoryServerWriterAPI } from './writer';
 

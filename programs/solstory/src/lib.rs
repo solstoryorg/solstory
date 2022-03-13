@@ -98,7 +98,7 @@ pub mod solstory {
          */
         // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = false;
-        (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
+        (*ctx.accounts.writer_head_pda).visibility_index = 0;
 
         // (*ctx.accounts.writer_pda).uri =  String::new();
         (*ctx.accounts.writer_head_pda).obj_id =  [0; 32];
@@ -132,7 +132,9 @@ pub mod solstory {
 
         // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = true;
-        (*ctx.accounts.writer_head_pda).visible_override = HolderOverride::Default;
+        (*ctx.accounts.writer_head_pda).visibility_index = 0;
+        (*ctx.accounts.writer_head_pda).access_type = AccessType::None;
+
 
         (*ctx.accounts.writer_head_pda).obj_id = [0; 32];
         (*ctx.accounts.writer_head_pda).current_hash = [0; 32];
@@ -260,6 +262,8 @@ pub mod solstory {
 
         // (*ctx.accounts.writer_head_pda).uri =  data.uri;
         (*ctx.accounts.writer_head_pda).current_hash =  hash;
+        (*ctx.accounts.writer_head_pda).access_type =  data.access_type;
+        (*ctx.accounts.writer_head_pda).obj_id =  data.obj_id;
 
 
         Ok(())
@@ -432,13 +436,14 @@ pub struct SetExtendedMetadata<'info> {
 }
 
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ExtAppendData {
     pub timestamp: i64,         // timestamp of block
     pub data_hash: [u8; 32],    // hash of block data
     pub prev_hash: [u8; 32],    // hash of the last blocks timestamp, data, and prev_hash
     pub new_hash: [u8; 32],     // verification step for safety
-    pub id: [u8; 32],            // uri of current block - preferably in permanent storage
+    pub access_type: AccessType, //how to reach the new node
+    pub obj_id: [u8; 32],            // uri of current block - preferably in permanent storage
 }
 
 #[derive(Accounts)]

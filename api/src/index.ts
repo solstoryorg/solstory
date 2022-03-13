@@ -5,7 +5,7 @@ import { SolstoryClientAPI } from './client'
 import { SolstoryServerAPI } from './server'
 import { SolstoryCommonAPI } from './common'
 import {
-  Metadata,
+  SolstoryMetadata,
   SolstoryItemInner,
   SolstoryItemType,
   UpdateHeadData
@@ -22,15 +22,18 @@ const idl2 = JSON.parse(JSON.stringify(solstoryIdl));
 
 /**
  * @param globalCdn This is the global cdn, which allows for the connecting of NFTs to Metadata/Stories.
+ * @param cacheTimeout How long to cache metadata for before doing a refresh.
+ * @param getNonValidatedWriters Get metadata/heads even for writers that haven't been validated by Solstory. Use this for testing.
  */
 type SolstoryConfig = {
   globalCdn?: string,
   cacheTimeout?: number,
+  getNonValidatedWriters?: boolean,
 }
 
 type MetadataCache = {
   lastAll: number,
-  metadata: {[writerKey: string]: Metadata},
+  metadata: {[writerKey: string]: SolstoryMetadata},
 }
 
 // export interface SolstoryAPI extends Program {
@@ -73,28 +76,41 @@ class SolstoryAPI extends Program<Idl> {
     }
 
 
-    ({ globalCdn: this.globalCdn } = solstoryConfig);
+    // ({ globalCdn: this.globalCdn } = solstoryConfig);
 
     if(solstoryConfig.globalCdn) {
       this.globalCdn = solstoryConfig.globalCdn;
+    } else {
+      console.warn("Solstory is designed for use with a globalCdn. Use without a global CDN may result in a large number of RPC requests. There is a public global cdn available at cdn.solstory.is");
     }
   }
 
   /**
    * @param fundingSecretKey node bundlr expects a string or uint8 of the secret key to use for funding. Please supply it here.
    * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
+   * @param options: options for bundlr. include timeout, providerUrl to set rpc endpoint.
    */
-  public configureBundlrServer(fundingSecretKey: Uint8Array|string, bundlrNetwork: string) {
+  public configureBundlrServer(fundingSecretKey: Uint8Array|string, bundlrNetwork: string, options?: {}) {
       if(!isNode) {
         console.warn("Unfamiliar environment, running as if it's node but behavior might not work as expected")
       }
 
-      if(bundlrNetwork=="devnet")
+      let bundlrOptions = options
+      if(bundlrNetwork=="devnet"){
         bundlrNetwork = BUNDLR_DEVNET_URL;
+        // if someone passes in devnet and doesn't specify, we protect them by automatically
+        // setting the correct RPC endpoint.
+        if(options == undefined){
+          bundlrOptions = {
+            providerUrl: "https://api.devnet.solana.com"
+          }
+        }
+      }
+
       if(bundlrNetwork=="mainnet")
         bundlrNetwork = BUNDLR_NODE_URL;
 
-      this.bundlr = new Bundlr(bundlrNetwork.toString(), "solana", fundingSecretKey);
+      this.bundlr = new Bundlr(bundlrNetwork.toString(), "solana", fundingSecretKey, bundlrOptions);
       this.bundlrReady=true;
   }
 
@@ -104,13 +120,21 @@ class SolstoryAPI extends Program<Idl> {
    * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
    */
 
-  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>, sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>, bundlrNetwork: string) {
+  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>, sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>, bundlrNetwork: string, options?: {}) {
       if (!isBrowser){
         throw "Failed to detect browser environment, please use the other bundlr configuration function"
       }
 
-      if(bundlrNetwork=="devnet")
+
+      let bundlrOptions = options;
+      if(bundlrNetwork=="devnet"){
         bundlrNetwork = BUNDLR_DEVNET_URL;
+        if(options == undefined){
+          bundlrOptions = {
+            providerUrl: "https://api.devnet.solana.com"
+          }
+        }
+      }
       if(bundlrNetwork=="mainnet")
         bundlrNetwork = BUNDLR_NODE_URL;
 
@@ -122,7 +146,7 @@ class SolstoryAPI extends Program<Idl> {
       console.log("provobj", bundlrobj);
       console.log("bundlrurl", BUNDLR_NODE_URL);
       this.bundlr = new WebBundlr(BUNDLR_NODE_URL, "solana",
-                                  bundlrobj);
+                                  bundlrobj, bundlrOptions);
       this.bundlr.ready().then(()=> {this.bundlrReady=true});
   }
 

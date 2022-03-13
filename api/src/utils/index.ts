@@ -2,6 +2,8 @@ import sha256 from 'crypto-js/sha256';
 import CryptoJS from 'crypto-js';
 import * as anchor from '@project-serum/anchor';
 
+export * from './retrievers'
+
 /* Hash function */
 
 export const timestampToBytes = (timestamp:any) => {
