@@ -347,30 +347,14 @@ export class SolstoryClientAPI {
     });
   }
 
+  /**
+    * @internal
+    *
+    * If you intend to use this function, please see how it works in {@link getAdditionalItems}.
+    */
   verifyItem(currentHash:string, verified: {itemRaw: string, itemHash:string, nextHash: string, timestamp:number}): boolean {
     return simpleHash(verified.itemRaw) == verified.itemHash &&
       Buffer.from(solstoryHash(verified.timestamp, verified.itemHash, verified.nextHash)).toString('hex') == currentHash;
 
   }
-  /**
-    * Verifies the validty of a solstory by requesting the head from the blockchain
-  * and then progressively verifying the _loaded items_. Will not verify items that haven't
-  * been retrieved.
-    *
-    * An invalid item will render all subsequent items invalid (since the proof of the next
-    * item from an invalid item cannot be trusted, and this recursively applies for the rest of
-    * the hashlist).
-    *
-    * This function will set the "valid" boolean to true or false on the SolstoryItemContainers in
-    * the solstory.
-    *
-    * @returns whether any items in the hashlist are invalid.
-    */
-  // function verifyStory(story: SolstoryStory): Promise<boolean> {
-
-    // this.program.common.getWriterHeadPda(
-    // getHead
-
-  // }
-
 }

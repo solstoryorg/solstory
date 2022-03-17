@@ -8,15 +8,22 @@ use crate::error::SolstoryError;
 
 // pub const METAPLEX_METADATA_ID:Pubkey = metaplex_token_metadata::id();
 pub const METAPLEX_METADATA_ID:Pubkey = solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
-pub const WRITER_ACCOUNT_LEN:usize = 8 +
+pub const WRITER_METADATA_LEN:usize = 8 +
 32 + //writer key
-1 + //authorized
+1 + //visible
+1 + //system validated
+1 + //api version
 128 + //label
-(192 * 4) + // url, logo, cdn, uri
-32*2 + // the two hashes
+(192 * 4) + // url, logo, cdn, base_url
 280 + //Tweet length metadata
-1000+
 1; //Extended metadata
+
+pub const WRITER_HEAD_LEN:usize = 8 +
+1 + // authorized
+1 + //visibility index
+1 + //access type
+32 + // obj_id
+32; //current_hash
 
 
 
@@ -77,15 +84,15 @@ impl Default for AccessType {
 pub struct WriterMetadata {
     //for NFT owner
     // This is the public key representing the writer.
-    pub writer_key: Pubkey,
+    pub writer_key: Pubkey, //32
     // This is used for the Writer Program to determine if users should see this
     // A writer program storing progress information for a video game, for example,
     // might set this to false.
-    pub visible: bool,
+    pub visible: bool, //1
     // Marks programs that have been validated by solstory org. Protection against
     // spam, phishing, ect.
-    pub system_validated: bool,
-    pub api_version: u8,
+    pub system_validated: bool, // 1
+    pub api_version: u8, // 1
 
     //for writer, semi-static
     pub label: String, // 128
@@ -95,10 +102,9 @@ pub struct WriterMetadata {
     pub cdn: String, // 192, //semi static
     pub base_url: String, //192 only meaningful in cases where AccessType=URL
 
-    pub metadata: String, // 192 metadata
+    pub metadata: String, // 280 metadata
 
-    //TODO: Determine metadata PDA standard
-    pub metadata_extended: bool, // suggests the existence of a an additional metadata pda.
+    pub metadata_extended: bool, // 1 suggests the existence of a an additional metadata pda.
 }
 
 /*

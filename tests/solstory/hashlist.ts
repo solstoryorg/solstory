@@ -229,7 +229,7 @@ describe('solstory hashlist test', async () => {
         const data = {
           timestamp: timestamp,
           dataHash: dataHash,
-          nextHash: Buffer.from(nextHash),
+          currentHash: Buffer.from(nextHash),
           objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
           newHash: newHash,
           accessType: {ardrive:{}},

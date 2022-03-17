@@ -90,7 +90,8 @@ describe('solstory creation', () => {
 
   });
 
-  it('Is initialized!', async function() {
+  //Skip this test because we _always_ initialize in the before function at this point.
+  xit('Is initialized!', async function() {
     // Add your test here.
     const [_pda, _nonce] = await PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory_pda"))],
@@ -333,6 +334,44 @@ describe('solstory creation', () => {
 
   })
 
+  it('it adjusts the visibility index', async function () {
+
+      const largestAccounts = await program.provider.connection.getTokenLargestAccounts(new PublicKey(mint));
+      const largestAccountInfo = await program.provider.connection.getParsedAccountInfo(largestAccounts.value[0].address);
+
+      const TOKEN = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+      const ATOKEN = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+
+    const [writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
+    const acts = {
+        writerProgram: writerWallet.publicKey,
+        ownerProgram: nftOwnerWallet.publicKey,
+        tokenMint: mint,
+        token: largestAccounts.value[0].address,
+        writerHeadPda: writerHeadPda,
+        holderKey: largestAccountInfo.value.data.parsed.info.owner,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: new PublicKey(TOKEN),
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      }
+
+    const tx = program.rpc.updateVisibilityIndex(10,
+    {
+      accounts: acts,
+      signers: [nftOwnerWallet.payer]
+
+    }
+    );
+    // console.dir(tx);
+    return tx;
+
+
+  })
   /*
    * This test eve attempts to create an authorized writer by creating the writer
    * as the owner.
