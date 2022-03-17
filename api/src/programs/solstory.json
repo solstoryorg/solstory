@@ -365,10 +365,6 @@
             "type": "bool"
           },
           {
-            "name": "systemBanned",
-            "type": "bool"
-          },
-          {
             "name": "apiVersion",
             "type": "u8"
           },
@@ -417,10 +413,8 @@
             "type": "bool"
           },
           {
-            "name": "visibleOverride",
-            "type": {
-              "defined": "HolderOverride"
-            }
+            "name": "visibilityIndex",
+            "type": "i8"
           },
           {
             "name": "accessType",
@@ -573,23 +567,9 @@
           },
           {
             "name": "Pda"
-          }
-        ]
-      }
-    },
-    {
-      "name": "HolderOverride",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Default"
           },
           {
-            "name": "Visible"
-          },
-          {
-            "name": "Hidden"
+            "name": "None"
           }
         ]
       }
@@ -619,7 +599,12 @@
     {
       "code": 13005,
       "name": "MetaplexDeserializeError",
-      "msg": "Metplaex Deserialization Failure"
+      "msg": "Metaplaex Deserialization Failure"
+    },
+    {
+      "code": 13006,
+      "name": "InvalidAccessTypeError",
+      "msg": "Invalid Access Type Error"
     }
   ],
   "metadata": {

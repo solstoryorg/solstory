@@ -168,7 +168,7 @@ describe('solstory hashlist test', async () => {
     const data = {
       timestamp: timestamp,
       dataHash: dataHash,
-      prevHash: oldHash,
+      nextHash: oldHash,
       newHash: newHash,
       objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
       accessType: {ardrive:{}},
@@ -223,13 +223,13 @@ describe('solstory hashlist test', async () => {
     return program.account.writerHead.fetch(writerHeadPda).
       then((wh) => {
 
-        const prevHash = wh.currentHash;
-        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(prevHash));
+        const nextHash = wh.currentHash;
+        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
 
         const data = {
           timestamp: timestamp,
           dataHash: dataHash,
-          prevHash: Buffer.from(prevHash),
+          nextHash: Buffer.from(nextHash),
           objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
           newHash: newHash,
           accessType: {ardrive:{}},
@@ -276,13 +276,13 @@ describe('solstory hashlist test', async () => {
       then((wh) => {
 
         // lie about the previous hash, in an attempt to redirect the chain
-        const prevHash = dataHash;
-        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(prevHash));
+        const nextHash = dataHash;
+        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
 
         const data = {
           timestamp: timestamp,
           dataHash: dataHash,
-          prevHash: Buffer.from(prevHash),
+          nextHash: Buffer.from(nextHash),
           objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
           newHash: newHash,
           accessType: {ardrive:{}},
@@ -297,12 +297,7 @@ describe('solstory hashlist test', async () => {
          {
            accounts: acts,
            signers: [writerWallet.payer],
-         });
-        return tx.then((tx) => {
-          return program.account.writerHead.fetch(writerHeadPda)
-        }).then((wh) => {
-          return wh.currentHash == newHash;
-        });
+         }).should.eventually.be.rejectedWith("Incorrect  Hashcode");
       });
   });
 

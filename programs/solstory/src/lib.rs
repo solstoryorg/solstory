@@ -99,6 +99,7 @@ pub mod solstory {
         // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
         (*ctx.accounts.writer_head_pda).authorized = false;
         (*ctx.accounts.writer_head_pda).visibility_index = 0;
+        (*ctx.accounts.writer_head_pda).access_type = AccessType::None;
 
         // (*ctx.accounts.writer_pda).uri =  String::new();
         (*ctx.accounts.writer_head_pda).obj_id =  [0; 32];
@@ -235,12 +236,12 @@ pub mod solstory {
 
         /*
          * The following things we need to validate ourselves
-         * the prev_hash is correct
-         * - meaning it is a product of old_timestamp, old_datahash, old_prev_hash
+         * the current_hash is correct
+         * - meaning it is a product of timestamp, datahash, old_current_hash
          * the timestamp is within a range of current time
          */
 
-        let hash = hash_from_prev(data.timestamp, data.data_hash, data.prev_hash);
+        let hash = hash_from_prev(data.timestamp, data.data_hash, data.current_hash);
         msg!("hash: {:?}", hash);
         if hash != data.new_hash {
             return Err(SolstoryError::HashMismatchError.into())
@@ -255,10 +256,13 @@ pub mod solstory {
             return Err(SolstoryError::TimestampRangeError.into())
         }
 
-        if data.prev_hash != (*ctx.accounts.writer_head_pda).current_hash {
+        if data.current_hash != (*ctx.accounts.writer_head_pda).current_hash {
             return Err(SolstoryError::HashMismatchError.into())
         }
 
+        if matches!(data.access_type, AccessType::None) {
+            return Err(SolstoryError::InvalidAccessTypeError.into())
+        }
 
         // (*ctx.accounts.writer_head_pda).uri =  data.uri;
         (*ctx.accounts.writer_head_pda).current_hash =  hash;
@@ -440,8 +444,8 @@ pub struct SetExtendedMetadata<'info> {
 pub struct ExtAppendData {
     pub timestamp: i64,         // timestamp of block
     pub data_hash: [u8; 32],    // hash of block data
-    pub prev_hash: [u8; 32],    // hash of the last blocks timestamp, data, and prev_hash
-    pub new_hash: [u8; 32],     // verification step for safety
+    pub current_hash: [u8; 32],    // hash of the current first item
+    pub new_hash: [u8; 32],     // hash of the new item, it's h (timestamp+data_hash+current_hash)
     pub access_type: AccessType, //how to reach the new node
     pub obj_id: [u8; 32],            // uri of current block - preferably in permanent storage
 }

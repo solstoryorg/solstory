@@ -11,6 +11,7 @@ import { SolstoryMetadata,
   AccessType,
   AccessTypeIndex
 } from '../common/types';
+import { solstoryItemInnerToString } from '../common/conversions'
 import { simpleHash, solstoryHash } from '../utils';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import ARWeave from 'arweave';
@@ -147,6 +148,20 @@ export class SolstoryServerWriterAPI {
 
   }
 
+  /**
+   * Uploads an item to bundlr.
+   *
+   * If you want to misuse the library, pass anything you want in and it'll get serialized
+   * to json. Or just copy this implementation of bundlr uploading for your own purposes.
+   *
+   * This will naturally fail if bundlr has not been initialized.
+   *
+   * WARNING: This function will also cost sol on either devnet or mainnet. Uploads to
+   * bundlr are relatively cheap but _are NOT_ free. Call this.bundlr.getPrice with the
+   * bytes in your data to get a price check.
+   *
+   * @param item a solstory item that gets turned into JSON then uploaded.
+   */
   async uploadItemBundlr(item:SolstoryItemContainer):Promise<string> {
     if(this.program.bundlr == undefined || !this.program.bundlrReady){
       return Promise.reject("bundlr not initialized");
@@ -193,11 +208,15 @@ export class SolstoryServerWriterAPI {
 
   }
 
+  /**
+   * Takes a brand new solstory item and converts it to the update data needed to update
+   * the head stored on the solana blockchain.
+   */
   solstoryItemToUpdateHeadData(solItem: SolstoryItemContainer, objId:Uint8Array, accessType:AccessType): UpdateHeadData{
       const cleanData = {
           timestamp: new anchor.BN(solItem.verified.timestamp),
           dataHash: Uint8Array.from(Buffer.from(solItem.verified.itemHash, 'hex')),
-          prevHash: Uint8Array.from(Buffer.from(solItem.verified.prevHash, 'hex')),
+          currentHash: Uint8Array.from(Buffer.from(solItem.verified.nextHash, 'hex')),
           newHash: Uint8Array.from(Buffer.from(solItem.hash, 'hex')),
           objId: objId as Uint8Array,
           accessType: accessType
@@ -207,10 +226,23 @@ export class SolstoryServerWriterAPI {
 
   }
 
+  /**
+   * Appends an item to the initialized writer+mintId solstory sidechain.
+   *
+   * This method transparently uses ARBundler for high efficiency uploading.
+   *
+   * skipInitHeadCheck will crash instead of creating a missing head account. This is useful
+   * because creating a head costs a (small) amount of sol, which a service might not want
+   * to do automatically at its own expense.
+   *
+   * Heads can be created manually by both the writer service (the one calling appendItem)
+   * or by the update-privilege-owner of the NFT, since it is a modification on the NFT.
+   */
   async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {skipInitHeadCheck: false}){
     //get prev item
     const timestamp = Math.floor(Date.now()/1000)
-    const dataHash = simpleHash(JSON.stringify(item));
+    const rawItem = solstoryItemInnerToString(item);
+    const dataHash = simpleHash(rawItem);
 
     const headPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
     if(!options.skipInitHeadCheck) {
@@ -233,9 +265,10 @@ export class SolstoryServerWriterAPI {
 
     const fullItem:SolstoryItemContainer = {
       verified: {
+        itemRaw: rawItem,
         item: item,
         itemHash: dataHash,
-        prevHash: headAct.currentHash,
+        nextHash: headAct.currentHash,
         timestamp: timestamp,
       },
       hash: Buffer.from(newHash).toString('hex'),
@@ -255,6 +288,10 @@ export class SolstoryServerWriterAPI {
 
 
   }
+
+  /**
+   * Wrapper function around the external append RPC call.
+   */
   async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData): Promise<string> {
 
       console.log("clean data:", data);

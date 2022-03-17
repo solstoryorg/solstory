@@ -1,3 +1,9 @@
+/**
+ * This is the entry point for using the solstory API. You should import the SolstoryAPI
+ * as well as any types you need, then access individual modules with `solstoryAPI.<module>.`
+ *
+ * @module SolstoryAPI (start here)
+ */
 import * as utils from "./utils/index";
 import { isBrowser, isNode } from "browser-or-node";
 import { Program, Idl, Provider, Coder } from '@project-serum/anchor';
@@ -8,7 +14,10 @@ import {
   SolstoryMetadata,
   SolstoryItemInner,
   SolstoryItemType,
-  UpdateHeadData
+  UpdateHeadData,
+  SolstoryItemContainer,
+  SolstoryHead,
+  SolstoryStory
 } from './common/types'
 import { SOLSTORY_PUBKEY, BUNDLR_NODE_URL, BUNDLR_DEVNET_URL } from './constants'
 import Bundlr, { WebBundlr } from '@bundlr-network/client';
@@ -25,7 +34,7 @@ const idl2 = JSON.parse(JSON.stringify(solstoryIdl));
  * @param cacheTimeout How long to cache metadata for before doing a refresh.
  * @param getNonValidatedWriters Get metadata/heads even for writers that haven't been validated by Solstory. Use this for testing.
  */
-type SolstoryConfig = {
+export type SolstoryConfig = {
   globalCdn?: string,
   cacheTimeout?: number,
   getNonValidatedWriters?: boolean,
@@ -43,16 +52,20 @@ type MetadataCache = {
  * but it has the additional "client" and "server" namespaces for common client and
  * server tasks.
  *
+ * @noInheritDoc
  */
 class SolstoryAPI extends Program<Idl> {
-  client: SolstoryClientAPI;
-  server: SolstoryServerAPI;
-  common: SolstoryCommonAPI;
+  public client: SolstoryClientAPI;
+  public server: SolstoryServerAPI;
+  public common: SolstoryCommonAPI;
   bundlr: Bundlr|WebBundlr|undefined;
   bundlrReady: boolean;
   globalCdn?: string;
   cacheTimeout: number; //in seconds;
+  /** @internal */
   metadataCache: MetadataCache;
+  /** @internal */
+  getNonValidatedWriters: boolean;
 
   constructor(solstoryConfig: SolstoryConfig, provider?: Provider, coder?: Coder){
     provider?.wallet;
@@ -75,7 +88,6 @@ class SolstoryAPI extends Program<Idl> {
       this.cacheTimeout = solstoryConfig.cacheTimeout;
     }
 
-
     // ({ globalCdn: this.globalCdn } = solstoryConfig);
 
     if(solstoryConfig.globalCdn) {
@@ -83,6 +95,12 @@ class SolstoryAPI extends Program<Idl> {
     } else {
       console.warn("Solstory is designed for use with a globalCdn. Use without a global CDN may result in a large number of RPC requests. There is a public global cdn available at cdn.solstory.is");
     }
+
+    if(solstoryConfig.getNonValidatedWriters)
+      this.getNonValidatedWriters = true;
+    else
+      this.getNonValidatedWriters = false;
+
   }
 
   /**
@@ -90,7 +108,7 @@ class SolstoryAPI extends Program<Idl> {
    * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
    * @param options: options for bundlr. include timeout, providerUrl to set rpc endpoint.
    */
-  public configureBundlrServer(fundingSecretKey: Uint8Array|string, bundlrNetwork: string, options?: {}) {
+  public configureBundlrServer(fundingSecretKey: Uint8Array|string, bundlrNetwork: string, options?: any) {
       if(!isNode) {
         console.warn("Unfamiliar environment, running as if it's node but behavior might not work as expected")
       }
@@ -98,13 +116,11 @@ class SolstoryAPI extends Program<Idl> {
       let bundlrOptions = options
       if(bundlrNetwork=="devnet"){
         bundlrNetwork = BUNDLR_DEVNET_URL;
+        if(options.providerUrl == undefined){
+          bundlrOptions.providerUrl = "https://api.devnet.solana.com";
+        }
         // if someone passes in devnet and doesn't specify, we protect them by automatically
         // setting the correct RPC endpoint.
-        if(options == undefined){
-          bundlrOptions = {
-            providerUrl: "https://api.devnet.solana.com"
-          }
-        }
       }
 
       if(bundlrNetwork=="mainnet")
@@ -120,19 +136,22 @@ class SolstoryAPI extends Program<Idl> {
    * @param bundlrNetwork the bundlr network to connect to. supplying "devnet" or "mainnet" will automatically connect you to an appropriate bundlr node for those solana chains.
    */
 
-  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>, sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>, bundlrNetwork: string, options?: {}) {
+  public configureBundlrWeb(signMessage: (message: Uint8Array) => Promise<Uint8Array>,
+                            sendTransaction:(transaction: any, connection: any, options?: any) => Promise<string>,
+                            bundlrNetwork: string,
+                            options: any={}) {
       if (!isBrowser){
         throw "Failed to detect browser environment, please use the other bundlr configuration function"
       }
 
 
       let bundlrOptions = options;
+
+      // We automatically configure devnet bundlr to work with devnet solana.
       if(bundlrNetwork=="devnet"){
         bundlrNetwork = BUNDLR_DEVNET_URL;
-        if(options == undefined){
-          bundlrOptions = {
-            providerUrl: "https://api.devnet.solana.com"
-          }
+        if(options.providerUrl == undefined){
+          bundlrOptions.providerUrl = "https://api.devnet.solana.com";
         }
       }
       if(bundlrNetwork=="mainnet")
@@ -151,7 +170,7 @@ class SolstoryAPI extends Program<Idl> {
   }
 
 }
-export type { SolstoryItemInner, UpdateHeadData } ;
+export type { SolstoryItemInner, UpdateHeadData, SolstoryHead, SolstoryMetadata, SolstoryItemContainer, SolstoryStory } ;
 
 export { SolstoryAPI, SolstoryItemType, utils }
 

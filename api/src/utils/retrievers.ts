@@ -8,13 +8,26 @@ import { SolstoryMetadata,
   SolstoryHead,
   SolstoryItemContainer,
   SolstoryStory,
-  solstoryItemContainerFromString,
 } from '../common/types'
+import {solstoryItemContainerFromString } from '../common/conversions'
+
+
+// ARweave can't export their module right SO
+let arweave:any;
+//@ts-ignore checking for bad import on client
+if(ARWeave.default){
+    //@ts-ignore checking for bad import on client
+    arweave = ARWeave.default;
+}else{
+    arweave = ARWeave;
+}
 
 
 const fetchArDriver = async (baseUrl:string, objId: Uint8Array):Promise<SolstoryItemContainer> => {
-    const b64 = ARWeave.utils.bufferTob64Url(Buffer.from(objId));
-    return axios.get("https://arweave.net/"+objId).then((res)=> {
+    console.log("ARWEAVE", arweave);
+    const b64 = arweave.utils.bufferTob64Url(Buffer.from(objId));
+    return axios.get("https://arweave.net/"+b64).then((res)=> {
+        console.log("ardriver fetch", res);
         return (solstoryItemContainerFromString(res.data));
     });
 }

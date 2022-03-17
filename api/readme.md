@@ -1,17 +1,25 @@
 # README
 
 ##Structure
-This library has a client and a server section. In a *naive* standard use case
-you would use the client section to do things like look up NFTs and their stories,
-mark stories on owned NFTs as visible or not visible, pretty much everything that
-you would do while signing the NFT owners address.
+The solstory API is a direct subclass of the automatically generated anchor API, which
+means you can interact with it in the same way you would any other anchor application.
+In addition, the API contains a {@link SolstoryClientAPI |client},
+{@link SolstoryServerWriterAPI |server/writer} (a system writing data to solstory
+hashlists) and {@link SolstoryServerOwnerAPI |server/owner}
+(an NFT creator wishing to add or approve applications implementing
+solstory functionality to their NFTs) section to fulfill common workflows and
+tasks for each of these parties.
 
-Conversely the server library is for things where you would sign with the NFT
-update authority's address (ie the creator of the NFT usually) or with the story
-writer's address. Basically it's where you administrate and push events. The two
-halves should not be mixed unless you're doing something deliberate, but in case
-you are, they currently exist together.
+For a better overview of the architecutre as a whole, see the docusaursu.
 
+The convenience libraries (client writer/server writer/owner) natively sign requests
+in that respective role with the key that SolstoryAPI/Anchor was initialized with. If
+the API was initialized with the useAnchorWallet capability of the solana-wallet-adapter
+library, then this will lead to a signature request visible to the user.
+
+If this behavior is unwanted, simply use the exposed anchor methods–architecture primitives
+are enforced on the server side, though it's worth checking out the types and making sure
+that any self hosted thirdparty {@link SolstoryItemContainer} fits the spec.
 
 ## Usage
 

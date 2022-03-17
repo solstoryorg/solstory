@@ -21,13 +21,13 @@ export const simpleHash = (input:string) => {
     return hash
 }
 
- export const solstoryHash = (timestamp: anchor.BN|number, data_hash: Uint8Array|string, prev_hash: Uint8Array|string) => {
+ export const solstoryHash = (timestamp: anchor.BN|number, data_hash: Uint8Array|string, nextHash: Uint8Array|string):Uint8Array => {
 
      if(typeof data_hash == "string"){
          data_hash = Uint8Array.from(Buffer.from(data_hash, 'hex'));
      }
-     if(typeof prev_hash == "string"){
-         prev_hash = Uint8Array.from(Buffer.from(prev_hash, 'hex'));
+     if(typeof nextHash == "string"){
+         nextHash = Uint8Array.from(Buffer.from(nextHash, 'hex'));
      }
      if(typeof timestamp == "number"){
          timestamp = new anchor.BN(timestamp);
@@ -54,7 +54,7 @@ export const simpleHash = (input:string) => {
 
      const timestampHash = u8FromHashOut(timeHash);
 
-     const full = new Uint8Array([...timestampHash, ...data_hash, ...prev_hash]);
+     const full = new Uint8Array([...timestampHash, ...data_hash, ...nextHash]);
 
      return u8FromHashOut(sha256(u8ToWords(full)))
  }
