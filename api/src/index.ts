@@ -112,6 +112,8 @@ class SolstoryAPI extends Program<Idl> {
       if(!isNode) {
         console.warn("Unfamiliar environment, running as if it's node but behavior might not work as expected")
       }
+      if(options == undefined)
+        options = {};
 
       let bundlrOptions = options
       if(bundlrNetwork=="devnet"){

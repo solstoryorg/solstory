@@ -325,6 +325,47 @@
       "args": []
     },
     {
+      "name": "updateVisibilityIndex",
+      "accounts": [
+        {
+          "name": "holderKey",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "token",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "number",
+          "type": "i8"
+        }
+      ]
+    },
+    {
       "name": "solAppend",
       "accounts": [],
       "args": []
@@ -519,7 +560,7 @@
             }
           },
           {
-            "name": "prevHash",
+            "name": "currentHash",
             "type": {
               "array": [
                 "u8",
@@ -577,34 +618,39 @@
   ],
   "errors": [
     {
-      "code": 13001,
+      "code": 6001,
       "name": "AccountExists",
       "msg": "This account already exists"
     },
     {
-      "code": 13002,
+      "code": 6002,
       "name": "InvalidOwnerError",
       "msg": "Stated owner does not have update privileges on the given metadata"
     },
     {
-      "code": 13003,
+      "code": 6003,
       "name": "HashMismatchError",
       "msg": "Incorrect Hashcode"
     },
     {
-      "code": 13004,
+      "code": 6004,
       "name": "TimestampRangeError",
       "msg": "TimestampOutOfRange"
     },
     {
-      "code": 13005,
+      "code": 6005,
       "name": "MetaplexDeserializeError",
       "msg": "Metaplaex Deserialization Failure"
     },
     {
-      "code": 13006,
+      "code": 6006,
       "name": "InvalidAccessTypeError",
       "msg": "Invalid Access Type Error"
+    },
+    {
+      "code": 6007,
+      "name": "VisibilityIndexAccessError",
+      "msg": "Visibility Index Access Violation"
     }
   ],
   "metadata": {

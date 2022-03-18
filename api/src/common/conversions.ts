@@ -151,13 +151,13 @@ export function solstoryItemContainerFromString(input: string|object):SolstoryIt
       hash: input.hash,
       verified: {
         // @ts-ignore we just verified this
-        itemHash: input.itemHash,
+        itemHash: input.verified.itemHash,
         // @ts-ignore we just verified this
-        nextHash: input.nextHash,
+        nextHash: input.verified.nextHash,
         // @ts-ignore we just verified this
-        timestamp: input.timestamp,
+        timestamp: input.verified.timestamp,
         // @ts-ignore we just verified this
-        itemRaw: input.itemRaw,
+        itemRaw: input.verified.itemRaw,
         // @ts-ignore we just verified this
         item: solstoryItemInnerFromString(input.verified.itemRaw)
       },

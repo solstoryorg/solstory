@@ -17,7 +17,7 @@ export type SolstoryMetadata = {
   /** Whether this writer is meant to be visible. Set to false for internal programs. */
   visible: boolean,
   /** Whether this writer has been validated by solstory. Meant for fraud and spam protection.*/
-  systemValidated: boolean,
+  systemValidated?: boolean,
   apiVersion: number,
 
   /** Additional metadata, JSON format. */

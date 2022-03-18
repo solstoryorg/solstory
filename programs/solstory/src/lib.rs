@@ -42,6 +42,8 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
         (*ctx.accounts.writer_metadata_pda).description = data.description;
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
+        (*ctx.accounts.writer_metadata_pda).api_version =  1;
+        (*ctx.accounts.writer_metadata_pda).system_validated =  false;
 
         if data.metadata.len() > 0{
             (*ctx.accounts.writer_metadata_pda).metadata_extended = true;

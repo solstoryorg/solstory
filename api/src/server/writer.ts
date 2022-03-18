@@ -136,6 +136,7 @@ export class SolstoryServerWriterAPI {
     const writerHeadPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
     const metaplexPda = await MetaplexMetadata.getPDA(mintId);
 
+        //@ts-ignore "finalized" is in commitment
     return this.program.rpc.createWriterHeadWriter({
       accounts: {
         writerProgram: this.writerKey,
@@ -143,6 +144,9 @@ export class SolstoryServerWriterAPI {
         writerHeadPda: writerHeadPda,
         systemProgram: anchor.web3.SystemProgram.programId,
         metaplexMetadataPda: metaplexPda,
+      },
+      options: {
+        commitment: 'finalized',
       }
     });
 
@@ -254,9 +258,18 @@ export class SolstoryServerWriterAPI {
     }catch(err:any) {
       // Creating a head costs sol, so we give the option to disable it.
       if(err.message.startsWith("Account does not exist") && !options.skipInitHeadCheck){
-        console.log("head is missing, creating it")
-        await this.createWriterHead(mintId);
-        headAct = await this.program.account.writerHead.fetch(headPda)
+        console.log("head is missing, creating it beep boop")
+        const sig = await this.createWriterHead(mintId);
+        this.program.provider.connection.confirmTransaction(sig, "finalized");
+        try {
+          headAct = await this.program.account.writerHead.fetch(headPda)
+        } catch(err:any) {
+          console.log("Doing the long hold");
+          // At least in local, sometimes finalized doesn't mean we can fetch.
+          // If it fails, retry in 30sec.
+          await new Promise(resolve=>setTimeout(resolve, 30000));
+          headAct = await this.program.account.writerHead.fetch(headPda)
+        }
       }else{
         throw err;
       }

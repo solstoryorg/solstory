@@ -315,6 +315,9 @@ export class SolstoryClientAPI {
    * when the additions are done.
    */
   getAdditionalItems(story: SolstoryStory, numItems:number): Promise<SolstoryStory> {
+    //Gate for the end of the chain:
+    if (story.next.objId.toString() == '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+      return Promise.resolve(story);
     //Hit up the CDN here
     if (story.metadata.cdn){
       return axios.get(story.metadata.cdn+'/nft/', {
@@ -325,7 +328,10 @@ export class SolstoryClientAPI {
                        }
       }).then((resp) => {
           console.log(resp);
-          return solstoryStoryFromString(resp.data);
+          //wrong
+          const story = solstoryStoryFromString(resp.data);
+          this.verifyStory(story);
+          return story
       });
 
     }
@@ -333,10 +339,17 @@ export class SolstoryClientAPI {
     let retriever:(baseUrl:string, objId:Uint8Array) => Promise<SolstoryItemContainer>;
     retriever = getRetriever(accessType);
 
+
     return retriever(story.metadata.baseUrl, story.next.objId).then((itemContainer) => {
       // Hexed obj ids used to do matching for "ref" field.
       itemContainer.objId = Buffer.from(story.next.objId).toString('hex');
-      itemContainer.verifiedSuccess = story.items[-1].verified && this.verifyItem(story.items[-1].verified.nextHash, itemContainer.verified);
+      console.log("story + new item", story, itemContainer);
+      const len = story.items.length;
+      if(len == 0)
+        itemContainer.verifiedSuccess = this.verifyItem(story.headHash, itemContainer.verified);
+      else
+        itemContainer.verifiedSuccess = story.items[len-1].verifiedSuccess && this.verifyItem(story.items[len-1].verified.nextHash, itemContainer.verified);
+
       story.items.push(itemContainer);
       story.next = itemContainer.next;
 
@@ -353,8 +366,30 @@ export class SolstoryClientAPI {
     * If you intend to use this function, please see how it works in {@link getAdditionalItems}.
     */
   verifyItem(currentHash:string, verified: {itemRaw: string, itemHash:string, nextHash: string, timestamp:number}): boolean {
+    console.log("verified", verified);
     return simpleHash(verified.itemRaw) == verified.itemHash &&
       Buffer.from(solstoryHash(verified.timestamp, verified.itemHash, verified.nextHash)).toString('hex') == currentHash;
+
+  }
+
+  /**
+    * When verifying a story, we only verify that items that have been already loaded.
+    *
+    * When loading via blockchain this process is performed automatically.
+    */
+  verifyStory(story:SolstoryStory):Promise<boolean> {
+    return this.getHead(story.metadata.writerKey, story.mintKey).then((head) => {
+      let overall = true;
+      let curHash = head.currentHash;
+      for(let i=0; i<story.items.length;i++) {
+        story.items[i].verifiedSuccess = overall && this.verifyItem(curHash, story.items[i].verified)
+        overall = story.items[i].verifiedSuccess as boolean;
+        curHash = story.items[i].verified.nextHash;
+      }
+
+      return overall;
+    });
+
 
   }
 }
