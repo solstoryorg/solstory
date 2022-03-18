@@ -1,5 +1,5 @@
 [programs.localnet]
-solstory = "storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa.json"
+solstory = "storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa"
 
 [registry]
 url = "https://anchor.projectserum.com"
