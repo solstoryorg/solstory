@@ -10,7 +10,7 @@ use crate::utils::*;
 use crate::state::*;
 use crate::error::SolstoryError;
 
-declare_id!("H3iPPJ6td4XPAVmBsygE8NxjnmAgeafPktr59JiV4jAv");
+declare_id!("storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa");
 
 /*
  * Currently the clock time in solana is extremely inaccurate,
