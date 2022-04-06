@@ -652,8 +652,5 @@
       "name": "VisibilityIndexAccessError",
       "msg": "Visibility Index Access Violation"
     }
-  ],
-  "metadata": {
-    "address": "H3iPPJ6td4XPAVmBsygE8NxjnmAgeafPktr59JiV4jAv"
-  }
+  ]
 }

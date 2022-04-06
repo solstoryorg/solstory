@@ -28,37 +28,11 @@ pub const WRITER_HEAD_LEN:usize = 8 +
 
 
 
-// struct ArrayString192(ArrayString<U192>);
-
-// impl Deref for ArrayString192 {
-//     fn deref(&self) -> &ArrayString<U192> {
-//         &self.0
-//     }
-// }
-
-// impl BorshDeserialize for ArrayString192 {
-//     fn deserialize(buf: &mut &[u8]){
-//         String::BorshDeserialize(buf);
-//     }
-// }
-
-// impl BorshSerialize for ArrayString192 {
-//     fn serialize<W>(&self, writer: &mut W) -> io::Result<()>{
-//         String::BorshSerialize(&self, writer);
-//     }
-// }
 
 
-
-/// Two account data structures
-/// main account
-/// writer account
-/// record account
-// (program, metaplex-metadata-account)
 #[account]
 #[derive(Default)]
 pub struct SolstoryPDA {
-    // cdn??
     pub initialized: bool,
     pub writers: i32,
 }

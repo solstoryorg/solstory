@@ -184,7 +184,7 @@ export class SolstoryServerWriterAPI {
     const tmpPrice = 1600;
     console.log('wtf', price > balance);
     console.log('wtf', price, balance);
-    if (price > balance) {
+    if (price.isGreaterThan(balance)) {
         // integerValue(0) means round up
         const amount:number = price.minus(balance).multipliedBy(1.1).integerValue(0).toNumber()
         const tmpAmount = 1600;
