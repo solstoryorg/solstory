@@ -1,12 +1,13 @@
 pub mod state;
 pub mod error;
 pub mod utils;
+pub mod processor;
 
 use anchor_lang::prelude::*;
 use solana_program::pubkey::PUBKEY_BYTES;
 use anchor_spl::token;
 use anchor_spl::token::Mint;
-use crate::utils::*;
+use crate::processor::*;
 use crate::state::*;
 use crate::error::SolstoryError;
 
@@ -87,15 +88,8 @@ pub mod solstory {
          * TODO: the metaplex pda is for the token mint
          */
         // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
-        (*ctx.accounts.writer_head_pda).authorized = false;
-        (*ctx.accounts.writer_head_pda).visibility_index = 0;
-        (*ctx.accounts.writer_head_pda).access_type = AccessType::None;
 
-        // (*ctx.accounts.writer_pda).uri =  String::new();
-        (*ctx.accounts.writer_head_pda).obj_id =  [0; 32];
-        (*ctx.accounts.writer_head_pda).current_hash =  [0; 32];
-
-        Ok(())
+        init_writer_account(&mut ctx.accounts.writer_head_pda, false)
     }
     //pub fn update writer
     pub fn create_writer_head_owner(ctx: Context<CreateWriterHeadOwner>) -> Result<()> {
@@ -121,17 +115,7 @@ pub mod solstory {
 
         // Make changes
 
-        // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
-        (*ctx.accounts.writer_head_pda).authorized = true;
-        (*ctx.accounts.writer_head_pda).visibility_index = 0;
-        (*ctx.accounts.writer_head_pda).access_type = AccessType::None;
-
-
-        (*ctx.accounts.writer_head_pda).obj_id = [0; 32];
-        (*ctx.accounts.writer_head_pda).current_hash = [0; 32];
-
-
-        Ok(())
+        init_writer_account(&mut ctx.accounts.writer_head_pda, true)
     }
 
     /*
@@ -209,11 +193,21 @@ pub mod solstory {
          * owner has the rights in the metaplex metadata pdak
          * TODO: metaplex metadata is for the token mint
          */
-        if((*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key)) {
+        if(*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key) {
             return Err(SolstoryError::InvalidOwnerError.into())
         }
         (*ctx.accounts.writer_head_pda).authorized = false;
         Ok(())
+    }
+
+    pub fn create_and_append(ctx: Context<CreateAndAppend>, data: ExtAppendData) -> Result<()> {
+        /*
+         * The following are validated by anchor
+         *
+         */
+        // Security wise this is a writer-create + an ext append.
+        init_writer_account(&mut ctx.accounts.writer_head_pda, false)?;
+        append_data_to_writer(&mut ctx.accounts.writer_head_pda, data)
     }
 
 
@@ -223,6 +217,11 @@ pub mod solstory {
          *  writer program is a signer
          *  token mint is a real token
          *  writer_head_pda exists and has seed (solstory, token_mind, writer_program)
+         *
+         * This function DOES NOT validate that the metadata exists. This is because
+         * there may be many heads for one metadata, and if we put a serialization
+         * lock on top of the metadata, a highly scaled writer program will not be able
+         * to operate in parallel, only in sequence.
          */
 
         /*
@@ -232,35 +231,7 @@ pub mod solstory {
          * the timestamp is within a range of current time
          */
 
-        let hash = hash_from_prev(data.timestamp, data.data_hash, data.current_hash);
-        msg!("hash: {:?}", hash);
-        if hash != data.new_hash {
-            return Err(SolstoryError::HashMismatchError.into())
-        }
-
-        let cur_time:i64 = (Clock::get()?).unix_timestamp;
-
-        //TODO: explore how tight we can get this.
-        // As mentioned above, this should be treated as a santiy check more than anything
-        if (data.timestamp-cur_time).abs() > TIMESTAMP_ACCEPTABLE_VARIANCE {
-            return Err(SolstoryError::TimestampRangeError.into())
-        }
-
-        if data.current_hash != (*ctx.accounts.writer_head_pda).current_hash {
-            return Err(SolstoryError::HashMismatchError.into())
-        }
-
-        if matches!(data.access_type, AccessType::None) {
-            return Err(SolstoryError::InvalidAccessTypeError.into())
-        }
-
-        // (*ctx.accounts.writer_head_pda).uri =  data.uri;
-        (*ctx.accounts.writer_head_pda).current_hash =  hash;
-        (*ctx.accounts.writer_head_pda).access_type =  data.access_type;
-        (*ctx.accounts.writer_head_pda).obj_id =  data.obj_id;
-
-
-        Ok(())
+        append_data_to_writer(&mut ctx.accounts.writer_head_pda, data)
         // we want to emit! here
     }
 
@@ -457,10 +428,6 @@ pub struct UpdateVisibilityIndex<'info> {
     pub token_program: Program<'info, token::Token>,
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
-
-
-
-
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -482,6 +449,21 @@ pub struct ExtAppend<'info> {
     token_mint: Account<'info, Mint>,
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
+}
+
+#[derive(Accounts)]
+pub struct CreateAndAppend<'info> {
+    /// CHECK: we only use this to get a program id
+    #[account(mut, signer)]
+    writer_program: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
+    // 'solstory' solstory prog, mintid, writer_program
+    #[account(init, payer=writer_program, space=WRITER_HEAD_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
+    writer_head_pda: Account<'info, WriterHead>,
+    system_program: Program<'info, System>,
+    //'metadata' metaplex_program_id, mint_id]
+    metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
 }
 
 #[derive(Accounts)]

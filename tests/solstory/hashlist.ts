@@ -37,16 +37,21 @@ describe('solstory hashlist test', async () => {
   const eveKey = Keypair.fromSeed(Uint8Array.from('00200000000044440000000000000002'))
   const eveWallet = new NodeWallet(eveKey);
 
+  //pubkey for the writer program!
+  const writerKey2 = Keypair.fromSeed(Uint8Array.from('00200000000044440000000000000003'))
+  const writerWallet2 = new NodeWallet(writerKey2);
 
   let mint;
+  let nftOwnerWallet;
 
 
   describe("inner loop to try and keep it from all stopping?", () => {
     // Configure the client to use the local cluster.
     before(async () => {
       console.log('hashlist1', await airdrop(connection, writerKey.publicKey, 3));
+      console.log('hashlist3', await airdrop(connection, writerKey2.publicKey, 3));
       console.log('hashlist 2', await airdrop(connection, eveKey.publicKey, 3));
-      const nftOwnerWallet = (await getWallet('hashlist'))[0];
+      nftOwnerWallet = (await getWallet('hashlist'))[0];
       console.log('hashlist NFT wallet', nftOwnerWallet.publicKey);
 
 
@@ -144,162 +149,228 @@ describe('solstory hashlist test', async () => {
 
     });
 
-  step('appends an initial record', async () => {
-    const fakeData = {
-      timestamp: new anchor.BN(Date.now()),
-      prev_hash:"",
-      data: {
+    step('appends an initial record', async () => {
+      const fakeData = {
+        timestamp: new anchor.BN(Date.now()),
+        prev_hash:"",
+        data: {
 
-        msg: "blap"
+          msg: "blap"
+        }
       }
-    }
 
-    const dataContent = JSON.stringify(fakeData.data);
+      const dataContent = JSON.stringify(fakeData.data);
 
-    const dataHasher = crypto.createHash('sha256');
-    dataHasher.update(Buffer.from(dataContent, 'utf-8'))
-    const dataHash = Uint8Array.from(dataHasher.digest());
+      const dataHasher = crypto.createHash('sha256');
+      dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+      const dataHash = Uint8Array.from(dataHasher.digest());
 
 
-    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
-    const oldHash = new Uint8Array(32).fill(0);
-    const newHash = solstoryHash(timestamp, dataHash, oldHash);
+      const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+      const oldHash = new Uint8Array(32).fill(0);
+      const newHash = solstoryHash(timestamp, dataHash, oldHash);
 
-    const data = {
-      timestamp: timestamp,
-      dataHash: dataHash,
-      nextHash: oldHash,
-      newHash: newHash,
-      objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
-      accessType: {ardrive:{}},
-      // accessType: JSON.stringify({ ardrive: {}})
-      // accessType: {ardrive:{}},
-    }
+      const data = {
+        timestamp: timestamp,
+        dataHash: dataHash,
+        nextHash: oldHash,
+        newHash: newHash,
+        objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
+        accessType: {ardrive:{}},
+        // accessType: JSON.stringify({ ardrive: {}})
+        // accessType: {ardrive:{}},
+      }
 
-    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
-      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
-      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
-      program.programId
-    ); //TODO: library function for this
+      const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
 
-    const writerHeadPda = _writerHeadPda;
-    const acts = {
-        writerProgram: writerWallet.publicKey,
-        tokenMint: mint,
-        writerHeadPda: writerHeadPda,
-      };
-    const tx = program.rpc.extAppend(data,
-     {
-       accounts: acts,
-       signers: [writerWallet.payer],
-     });
-    return tx.then((tx) => {
-      return program.account.writerHead.fetch(writerHeadPda)
-    }).then((wh) => {
-      return wh.currentHash == newHash;
+      const writerHeadPda = _writerHeadPda;
+      const acts = {
+          writerProgram: writerWallet.publicKey,
+          tokenMint: mint,
+          writerHeadPda: writerHeadPda,
+        };
+      const tx = program.rpc.extAppend(data,
+       {
+         accounts: acts,
+         signers: [writerWallet.payer],
+       });
+      return tx.then((tx) => {
+        return program.account.writerHead.fetch(writerHeadPda)
+      }).then((wh) => {
+        return wh.currentHash == newHash;
+      });
     });
-  });
 
 
-  step('appends a subsequent record', async () => {
-    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
-      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
-      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
-      program.programId
-    ); //TODO: library function for this
-    const writerHeadPda = _writerHeadPda;
+    step('appends a subsequent record', async () => {
+      const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+      const writerHeadPda = _writerHeadPda;
 
-    const fakeData = {
-      data: 'more fake data',
-    }
+      const fakeData = {
+        data: 'more fake data',
+      }
 
-    const dataContent = JSON.stringify(fakeData.data);
+      const dataContent = JSON.stringify(fakeData.data);
 
-    const dataHasher = crypto.createHash('sha256');
-    dataHasher.update(Buffer.from(dataContent, 'utf-8'))
-    const dataHash = dataHasher.digest();
-    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+      const dataHasher = crypto.createHash('sha256');
+      dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+      const dataHash = dataHasher.digest();
+      const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
 
-    return program.account.writerHead.fetch(writerHeadPda).
-      then((wh) => {
+      return program.account.writerHead.fetch(writerHeadPda).
+        then((wh) => {
 
-        const nextHash = wh.currentHash;
-        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
+          const nextHash = wh.currentHash;
+          const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
 
-        const data = {
-          timestamp: timestamp,
-          dataHash: dataHash,
-          currentHash: Buffer.from(nextHash),
-          objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
-          newHash: newHash,
-          accessType: {ardrive:{}},
-        }
+          const data = {
+            timestamp: timestamp,
+            dataHash: dataHash,
+            currentHash: Buffer.from(nextHash),
+            objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
+            newHash: newHash,
+            accessType: {ardrive:{}},
+          }
 
-        const acts = {
-            writerProgram: writerWallet.publicKey,
-            tokenMint: mint,
-            writerHeadPda: writerHeadPda,
-          };
-        const tx = program.rpc.extAppend(data,
-         {
-           accounts: acts,
-           signers: [writerWallet.payer],
-         });
-        return tx.then((tx) => {
-          return program.account.writerHead.fetch(writerHeadPda)
-        }).then((wh) => {
-          return wh.currentHash == newHash;
+          const acts = {
+              writerProgram: writerWallet.publicKey,
+              tokenMint: mint,
+              writerHeadPda: writerHeadPda,
+            };
+          const tx = program.rpc.extAppend(data,
+           {
+             accounts: acts,
+             signers: [writerWallet.payer],
+           });
+          return tx.then((tx) => {
+            return program.account.writerHead.fetch(writerHeadPda)
+          }).then((wh) => {
+            return wh.currentHash == newHash;
+          });
         });
-      });
-  });
+    });
 
-  step('fails to append an incorrect hash', async () => {
-    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
-      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
-      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
-      program.programId
-    ); //TODO: library function for this
-    const writerHeadPda = _writerHeadPda;
+    step('fails to append an incorrect hash', async () => {
+      const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+      const writerHeadPda = _writerHeadPda;
 
-    const fakeData = {
-      data: 'more fake data aa',
-    }
+      const fakeData = {
+        data: 'more fake data aa',
+      }
 
-    const dataContent = JSON.stringify(fakeData.data);
+      const dataContent = JSON.stringify(fakeData.data);
 
-    const dataHasher = crypto.createHash('sha256');
-    dataHasher.update(Buffer.from(dataContent, 'utf-8'))
-    const dataHash = dataHasher.digest();
-    const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+      const dataHasher = crypto.createHash('sha256');
+      dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+      const dataHash = dataHasher.digest();
+      const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
 
-    return program.account.writerHead.fetch(writerHeadPda).
-      then((wh) => {
+      return program.account.writerHead.fetch(writerHeadPda).
+        then((wh) => {
 
-        // lie about the previous hash, in an attempt to redirect the chain
-        const nextHash = dataHash;
-        const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
+          // lie about the previous hash, in an attempt to redirect the chain
+          const nextHash = dataHash;
+          const newHash = solstoryHash(timestamp, dataHash, Buffer.from(nextHash));
 
-        const data = {
-          timestamp: timestamp,
-          dataHash: dataHash,
-          nextHash: Buffer.from(nextHash),
-          objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
-          newHash: newHash,
-          accessType: {ardrive:{}},
+          const data = {
+            timestamp: timestamp,
+            dataHash: dataHash,
+            nextHash: Buffer.from(nextHash),
+            objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111112", "hex")),
+            newHash: newHash,
+            accessType: {ardrive:{}},
+          }
+
+          const acts = {
+              writerProgram: writerWallet.publicKey,
+              tokenMint: mint,
+              writerHeadPda: writerHeadPda,
+            };
+          const tx = program.rpc.extAppend(data,
+           {
+             accounts: acts,
+             signers: [writerWallet.payer],
+           }).should.eventually.be.rejectedWith("Incorrect  Hashcode");
+        });
+    });
+
+    step('succeeds in create_and_appending', async function() {
+      const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet2.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+
+
+      const [writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
+        // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+        [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet2.publicKey.toBuffer()],
+        program.programId
+      ); //TODO: library function for this
+
+      const metaplex_pda = await Metadata.getPDA(mint);
+      const acts = {
+          writerProgram: writerWallet2.publicKey,
+          ownerProgram: nftOwnerWallet.publicKey,
+          tokenMint: mint,
+          writerHeadPda: writerHeadPda,
+          writerMetadataPda: writerMetadataPda,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          metaplexMetadataPda: metaplex_pda,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         }
 
-        const acts = {
-            writerProgram: writerWallet.publicKey,
-            tokenMint: mint,
-            writerHeadPda: writerHeadPda,
-          };
-        const tx = program.rpc.extAppend(data,
-         {
-           accounts: acts,
-           signers: [writerWallet.payer],
-         }).should.eventually.be.rejectedWith("Incorrect  Hashcode");
+      const fakeData = {
+        timestamp: new anchor.BN(Date.now()),
+        prev_hash:"",
+        data: {
+
+          msg: "blap"
+        }
+      }
+
+      const dataContent = JSON.stringify(fakeData.data);
+
+      const dataHasher = crypto.createHash('sha256');
+      dataHasher.update(Buffer.from(dataContent, 'utf-8'))
+      const dataHash = Uint8Array.from(dataHasher.digest());
+
+
+      const timestamp = new anchor.BN(Math.floor(Date.now()/1000));
+      const oldHash = new Uint8Array(32).fill(0);
+      const newHash = solstoryHash(timestamp, dataHash, oldHash);
+
+      const data = {
+        timestamp: timestamp,
+        dataHash: dataHash,
+        nextHash: oldHash,
+        newHash: newHash,
+        objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
+        accessType: {ardrive:{}},
+      }
+      const tx = program.rpc.createAndAppend(data,
+      {
+        accounts: acts,
+        signers: [writerWallet2.payer]
+
       });
-  });
+
+
+      // console.dir(tx);
+      return tx;
+    });
 
 
 

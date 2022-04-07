@@ -59,7 +59,7 @@ describe('testing basic hashing capabilities', () => {
   });
 
   it('create a correct hash for a record', () => {
-    //this doesn't really test the code but verifies our hashing function approach works
+    //This EXCLUSIVELY tests that the hashing function is implemented correctly.
 
     const timestamp = new anchor.BN(323212);
 

@@ -377,13 +377,12 @@ describe('solstory creation', () => {
    * as the owner.
    */
   it('Fails to create a writer head when not the owner', async function () {
-    const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+    const [writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
       program.programId
     ); //TODO: library function for this
 
-    const writerHeadPda = _writerHeadPda;
     const metaplex_pda = await Metadata.getPDA(mint2);
     const acts = {
         writerProgram: eveWallet.publicKey,
@@ -448,13 +447,12 @@ describe('solstory creation', () => {
       ); //TODO: library function for this
 
 
-      const [_writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
+      const [writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
         program.programId
       ); //TODO: library function for this
 
-      const writerHeadPda = _writerHeadPda;
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
@@ -479,13 +477,12 @@ describe('solstory creation', () => {
     });
 
     step('Able to authorize a writer', async function () {
-      const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+      const [writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
         program.programId
       ); //TODO: library function for this
 
-      const writerHeadPda = _writerHeadPda;
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
@@ -512,13 +509,12 @@ describe('solstory creation', () => {
     });
 
     step('Able to deauthorize a writer', async function () {
-      const [_writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
+      const [writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), writerWallet.publicKey.toBuffer()],
         program.programId
       ); //TODO: library function for this
 
-      const writerHeadPda = _writerHeadPda;
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
