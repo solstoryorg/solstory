@@ -250,6 +250,44 @@
       "args": []
     },
     {
+      "name": "createAndAppend",
+      "accounts": [
+        {
+          "name": "writerProgram",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerHeadPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metaplexMetadataPda",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": {
+            "defined": "ExtAppendData"
+          }
+        }
+      ]
+    },
+    {
       "name": "extAppend",
       "accounts": [
         {
@@ -652,5 +690,8 @@
       "name": "VisibilityIndexAccessError",
       "msg": "Visibility Index Access Violation"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa"
+  }
 }

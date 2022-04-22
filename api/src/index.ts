@@ -32,12 +32,12 @@ const idl2 = JSON.parse(JSON.stringify(solstoryIdl));
 /**
  * @param globalCdn This is the global cdn, which allows for the connecting of NFTs to Metadata/Stories.
  * @param cacheTimeout How long to cache metadata for before doing a refresh.
- * @param getNonValidatedWriters Get metadata/heads even for writers that haven't been validated by Solstory. Use this for testing.
+ * @param includeNonValidatedWriters Get metadata/heads even for writers that haven't been validated by Solstory. Use this for testing.
  */
 export type SolstoryConfig = {
   globalCdn?: string,
   cacheTimeout?: number,
-  getNonValidatedWriters?: boolean,
+  includeNonValidatedWriters?: boolean,
 }
 
 type MetadataCache = {
@@ -65,7 +65,7 @@ class SolstoryAPI extends Program<Idl> {
   /** @internal */
   metadataCache: MetadataCache;
   /** @internal */
-  getNonValidatedWriters: boolean;
+  includeNonValidatedWriters: boolean;
 
   constructor(solstoryConfig: SolstoryConfig, provider?: Provider, coder?: Coder){
     provider?.wallet;
@@ -96,10 +96,10 @@ class SolstoryAPI extends Program<Idl> {
       console.warn("Solstory is designed for use with a globalCdn. Use without a global CDN may result in a large number of RPC requests. There is a public global cdn available at cdn.solstory.is");
     }
 
-    if(solstoryConfig.getNonValidatedWriters)
-      this.getNonValidatedWriters = true;
+    if(solstoryConfig.includeNonValidatedWriters)
+      this.includeNonValidatedWriters = true;
     else
-      this.getNonValidatedWriters = false;
+      this.includeNonValidatedWriters = false;
 
   }
 

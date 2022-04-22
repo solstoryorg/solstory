@@ -45,7 +45,6 @@ export class SolstoryClientAPI {
     if(this.program.globalCdn) {
         return axios.get(this.program.globalCdn+'/metadata/'+writerKey.toBase58()).then((res) =>{
 
-          console.log("single metadata", res);
 
           return solstoryMetadataFromString(res.data);
         });
@@ -53,7 +52,6 @@ export class SolstoryClientAPI {
 
     return this.program.common.getWriterMetadataPda(writerKey).then((pdaKey)=> {
       return this.program.account.WriterMetadata.fetch(pdaKey).then((meta) => {
-        console.log("meta from the chain", meta);
         return meta as SolstoryMetadata;
       });
     });
@@ -65,21 +63,20 @@ export class SolstoryClientAPI {
    *
    * This will default to only getting validated metadata, meaning metadata approved by the system.
    * If you'd like to get even non-validated accounts, initiate the API with the
-   * "getNonValidatedWriters" option set to true.
+   * "includeNonValidatedWriters" option set to true.
    *
    *  @param cacheOverChain if this is true, we'll try to use the local cache instead
    *  of calling the blockhain. Setting this to true means getAllMetadata might return
    *  stale data.
    */
   getAllMetadata(cacheOverChain=false): Promise<SolstoryMetadata[]> {
-    console.log("getallmetadata");
     // try cdn first
     if(this.program.globalCdn){
       // web request here
       return axios.get(this.program.globalCdn+'/metadata/all')
         .then((res) => {
           console.log(res);
-          //here we insert them into the cache.
+          //TODO: here we insert them into the cache.
           //
           //
           this.program.metadataCache.lastAll = Date.now()
@@ -96,7 +93,7 @@ export class SolstoryClientAPI {
         offset: 32, // public key then validation byte.
         bytes: bs58.encode(Uint8Array.from([1])), //true
       }}]
-    if(this.program.getNonValidatedWriters)
+    if(this.program.includeNonValidatedWriters)
       filter = [];
 
     return this.program.account.writerMetadata.all(
@@ -157,7 +154,7 @@ export class SolstoryClientAPI {
    *
    * Just like the getAllMetadata this will default to only getting validated metadata.
    * If you'd like to get even non-validated accounts, initiate the API with the
-   * "getNonValidatedWriters" option set to true.
+   * "includeNonValidatedWriters" option set to true.
    *
    * @param showInvisible Stories can mark themselves as "invisible" when they are used for system
    * things. For example, a serverless NFT game might store game data intended for use by the system,
@@ -175,7 +172,6 @@ export class SolstoryClientAPI {
     }
 
     console.warn("Currently fetching writers for NFT without a global CDN, this is expensive and liable to overloading RPC endpoint API limits.");
-    console.warn("TESTING23");
 
     // check for cache expiration
     if  (forceRefreshMetadata || Date.now()-(1000*this.program.cacheTimeout) > this.program.metadataCache.lastAll ){
@@ -188,10 +184,8 @@ export class SolstoryClientAPI {
     // lookup all head PDAs in a mass call
     const pdaPromises:Promise<{pda:PublicKey, wk:string}>[] = [];
 
-    console.log(this.program.metadataCache);
     //iterate through all metadata and create teh PDA address.
     for(let writerKey in this.program.metadataCache.metadata) {
-      console.log("checking writer key", writerKey);
       const metadata = this.program.metadataCache.metadata[writerKey];
       // skip if the metadata marks itself as not user visible
       if (!showInvisible && !metadata.visible)
@@ -212,7 +206,6 @@ export class SolstoryClientAPI {
         const objectsSlice = headPdaPubkeyObjects.slice(i, i+100);
         const pdaSlice = objectsSlice.map((pair)=>{return pair.pda});
         fetchPromises.push(this.program.account.writerHead.fetchMultiple(pdaSlice).then((accts) => {
-          console.log("fetch head pdas out", accts);
           const outs:SolstoryHead[] = []
           accts.map((acctObj, index) => {
             // null means the account was not found (and doesn't exist)
@@ -288,7 +281,6 @@ export class SolstoryClientAPI {
                        }
 
       }).then((resp) => {
-          console.log(resp);
           return solstoryStoryFromString(resp.data);
       });
     }
@@ -327,7 +319,6 @@ export class SolstoryClientAPI {
                          cursor: story.next.cdnCursor
                        }
       }).then((resp) => {
-          console.log(resp);
           //wrong
           const story = solstoryStoryFromString(resp.data);
           this.verifyStory(story);
@@ -366,7 +357,6 @@ export class SolstoryClientAPI {
     * If you intend to use this function, please see how it works in {@link getAdditionalItems}.
     */
   verifyItem(currentHash:string, verified: {itemRaw: string, itemHash:string, nextHash: string, timestamp:number}): boolean {
-    console.log("verified", verified);
     return simpleHash(verified.itemRaw) == verified.itemHash &&
       Buffer.from(solstoryHash(verified.timestamp, verified.itemHash, verified.nextHash)).toString('hex') == currentHash;
 

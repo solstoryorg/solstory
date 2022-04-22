@@ -33,7 +33,7 @@
         "watch": "yarn run pre-build; tsc --watch"
     },
     "dependencies": {
-        "@bundlr-network/client": "^0.5.18",
+        "@bundlr-network/client": "^0.7.1",
         "@emotion/react": "^11.7.1",
         "@emotion/styled": "^11.6.0",
         "@metaplex-foundation/amman": "^0.0.9",

@@ -18,7 +18,7 @@ import ARWeave from 'arweave';
 
 module SolstoryServerWriterAPI {
   export type SolstoryApprendItemOptions = {
-    skipInitHeadCheck: boolean;
+    confirmation: web3.ConfirmOptions,
   }
 }
 /*
@@ -153,6 +153,19 @@ export class SolstoryServerWriterAPI {
   }
 
   /**
+   * Returns price of an upload to bundlr
+   *
+   */
+  async bundlrPriceCheck(item:SolstoryItemContainer):Promise<number> {
+    if(this.program.bundlr == undefined || !this.program.bundlrReady){
+      return Promise.reject("bundlr not initialized");
+    }
+    const json = JSON.stringify(item);
+
+    return this.program.bundlr.getPrice((new TextEncoder().encode(json)).length).then((bn)=>bn.toNumber());
+
+  }
+  /**
    * Uploads an item to bundlr.
    *
    * If you want to misuse the library, pass anything you want in and it'll get serialized
@@ -172,29 +185,16 @@ export class SolstoryServerWriterAPI {
     }
     const json = JSON.stringify(item);
 
-    console.log("bundlr json", json);
-
-
     const price = await this.program.bundlr.getPrice((new TextEncoder().encode(json)).length);
     // Get your current balance
     const balance = await this.program.bundlr.getLoadedBalance();
-    console.log("bundlr stuff", price.toString(), balance.toString());
-    // If you don't have enough balance for the upload
-    //TODO: temporary testing fix while bundlr has issues.
-    const tmpPrice = 1600;
-    console.log('wtf', price > balance);
-    console.log('wtf', price, balance);
     if (price.isGreaterThan(balance)) {
         // integerValue(0) means round up
         const amount:number = price.minus(balance).multipliedBy(1.1).integerValue(0).toNumber()
-        const tmpAmount = 1600;
         console.log("attempting to increase funding by", amount);
         // Fund your account with the difference
         // We multiply by 1.1 to make sure we don't run out of funds
-        if(amount == NaN)
-          await this.program.bundlr.fund(tmpAmount);
-        else
-          await this.program.bundlr.fund(amount);
+        await this.program.bundlr.fund(amount);
     }
 
     console.log("funded")
@@ -242,34 +242,90 @@ export class SolstoryServerWriterAPI {
    * Heads can be created manually by both the writer service (the one calling appendItem)
    * or by the update-privilege-owner of the NFT, since it is a modification on the NFT.
    */
-  async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {skipInitHeadCheck: false}){
+  async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {confirmation:{}}){
     //get prev item
     const timestamp = Math.floor(Date.now()/1000)
     const rawItem = solstoryItemInnerToString(item);
     const dataHash = simpleHash(rawItem);
 
     const headPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
-    if(!options.skipInitHeadCheck) {
-
-    }
     let headAct;
+    // This will error if head is missing, which we want since this isn't appendItemCreate
+    headAct = await this.program.account.writerHead.fetch(headPda)
+    const newHash = solstoryHash(timestamp, dataHash, headAct.currentHash)
+
+    const fullItem:SolstoryItemContainer = {
+      verified: {
+        itemRaw: rawItem,
+        item: item,
+        itemHash: dataHash,
+        nextHash: headAct.currentHash,
+        timestamp: timestamp,
+      },
+      hash: Buffer.from(newHash).toString('hex'),
+      next: {
+        objId: headAct.objId,
+        accessType: headAct.accessType,
+      }
+    };
+
+    const url = await this.uploadItemBundlr(fullItem);
+    const objId = ARWeave.utils.b64UrlToBuffer(url);
+
+    const headUpdate = this.solstoryItemToUpdateHeadData(fullItem, objId, AccessTypeIndex.ArDrive);
+
+
+    return this.updateHeadAppend(mintId, headUpdate, options.confirmation);
+
+
+  }
+
+  /**
+   * Appends an item to the initialized writer+mintId solstory sidechain.
+   *
+   * This method transparently uses ARBundler for high efficiency uploading.
+   *
+   * skipInitHeadCheck will crash instead of creating a missing head account. This is useful
+   * because creating a head costs a (small) amount of sol, which a service might not want
+   * to do automatically at its own expense.
+   *
+   * Heads can be created manually by both the writer service (the one calling appendItem)
+   * or by the update-privilege-owner of the NFT, since it is a modification on the NFT.
+   */
+  async appendItemCreate(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {confirmation:{}}){
+    //get prev item
+    const timestamp = Math.floor(Date.now()/1000)
+    const rawItem = solstoryItemInnerToString(item);
+    const dataHash = simpleHash(rawItem);
+
+    const headPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
+    let headAct;
+    let accounts;
+    let create = false;
     try {
       headAct = await this.program.account.writerHead.fetch(headPda)
     }catch(err:any) {
       // Creating a head costs sol, so we give the option to disable it.
-      if(err.message.startsWith("Account does not exist") && !options.skipInitHeadCheck){
-        console.log("head is missing, creating it beep boop")
-        const sig = await this.createWriterHead(mintId);
-        this.program.provider.connection.confirmTransaction(sig, "finalized");
-        try {
-          headAct = await this.program.account.writerHead.fetch(headPda)
-        } catch(err:any) {
-          console.log("Doing the long hold");
-          // At least in local, sometimes finalized doesn't mean we can fetch.
-          // If it fails, retry in 30sec.
-          await new Promise(resolve=>setTimeout(resolve, 30000));
-          headAct = await this.program.account.writerHead.fetch(headPda)
-        }
+      if(err.message.startsWith("Account does not exist")){
+        console.log("head is missing, creating it.")
+
+        const writerHeadPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
+        const metaplexPda = await MetaplexMetadata.getPDA(mintId);
+
+        accounts = {
+            writerProgram: this.writerKey,
+            tokenMint: mintId,
+            writerHeadPda: writerHeadPda,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            metaplexMetadataPda: metaplexPda,
+          };
+        create = true;
+
+        headAct = {
+          currentHash: new Uint8Array(32).fill(0),
+          objId: new Uint8Array(32).fill(0),
+          accessType: {none:{}}
+        };
       }else{
         throw err;
       }
@@ -297,15 +353,21 @@ export class SolstoryServerWriterAPI {
     const headUpdate = this.solstoryItemToUpdateHeadData(fullItem, objId, AccessTypeIndex.ArDrive);
 
 
-    return this.updateHeadAppend(mintId, headUpdate);
+    if(!create)
+      return this.updateHeadAppend(mintId, headUpdate);
+
+    return this.program.rpc.createAndAppend(headUpdate,
+          {
+            accounts: accounts,
+            options: options.confirmation,
+          });
 
 
   }
-
   /**
    * Wrapper function around the external append RPC call.
    */
-  async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData): Promise<string> {
+  async updateHeadAppend(mintId:PublicKey, data: UpdateHeadData, options: web3.ConfirmOptions={}): Promise<string> {
 
       console.log("clean data:", data);
       const writerHeadPda = await this.program.common.getWriterHeadPda(this.writerKey, mintId);
@@ -315,6 +377,7 @@ export class SolstoryServerWriterAPI {
           tokenMint: mintId,
           writerHeadPda: writerHeadPda,
         },
+        options: options,
       });
   }
 

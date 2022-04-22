@@ -271,7 +271,7 @@ pub mod solstory {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer=authority, seeds=[b"solstory_pda"], bump)]
+    #[account(init, space=15, payer=authority, seeds=[b"solstory_pda"], bump)]
     solstory_pda: Account<'info, SolstoryPDA>,
     //check that this is this program and then check that auth has update rights
     #[account(mut)]

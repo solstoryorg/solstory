@@ -357,7 +357,7 @@ describe('solstory hashlist test', async () => {
         dataHash: dataHash,
         nextHash: oldHash,
         newHash: newHash,
-        objId: Uint8Array.from(Buffer.from("1111111111111111111111111111111111111111111111111111111111111111", "hex")),
+        objId: Uint8Array.from(Buffer.from("1111111180081351111111111111111111111111111111111111111111111111", "hex")),
         accessType: {ardrive:{}},
       }
       const tx = program.rpc.createAndAppend(data,
