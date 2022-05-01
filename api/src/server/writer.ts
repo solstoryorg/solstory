@@ -11,15 +11,13 @@ import { SolstoryMetadata,
   AccessType,
   AccessTypeIndex
 } from '../common/types';
-import { solstoryItemInnerToString } from '../common/conversions'
+import { solstoryItemInnerToString, solstoryItemContainerToString } from '../common/conversions'
 import { simpleHash, solstoryHash } from '../utils';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import ARWeave from 'arweave';
 
-module SolstoryServerWriterAPI {
-  export type SolstoryApprendItemOptions = {
+export interface SolstoryAppendItemOptions {
     confirmation: web3.ConfirmOptions,
-  }
 }
 /*
  * This class is for API calls that you would use as the writer program. They'll
@@ -183,30 +181,26 @@ export class SolstoryServerWriterAPI {
     if(this.program.bundlr == undefined || !this.program.bundlrReady){
       return Promise.reject("bundlr not initialized");
     }
-    const json = JSON.stringify(item);
+    const json = solstoryItemContainerToString(item);
 
     const price = await this.program.bundlr.getPrice((new TextEncoder().encode(json)).length);
     // Get your current balance
     const balance = await this.program.bundlr.getLoadedBalance();
     if (price.isGreaterThan(balance)) {
         // integerValue(0) means round up
-        const amount:number = price.minus(balance).multipliedBy(1.1).integerValue(0).toNumber()
+        const amount:number = price.multipliedBy(this.program.bundlrFundingRatio as number).integerValue(0).toNumber()
         console.log("attempting to increase funding by", amount);
         // Fund your account with the difference
-        // We multiply by 1.1 to make sure we don't run out of funds
         await this.program.bundlr.fund(amount);
     }
 
     console.log("funded")
     // Create, sign and upload the transaction
     const transaction = this.program.bundlr.createTransaction(json);
-    console.log("bunldr transaction", transaction);
 
     await transaction.sign();
     const id = transaction.id;
-    console.log("pre upload");
     return transaction.upload().then((result)=>{
-      console.log("bundlr output", id, result);
       return id;
     });
 
@@ -235,14 +229,15 @@ export class SolstoryServerWriterAPI {
    *
    * This method transparently uses ARBundler for high efficiency uploading.
    *
-   * skipInitHeadCheck will crash instead of creating a missing head account. This is useful
-   * because creating a head costs a (small) amount of sol, which a service might not want
-   * to do automatically at its own expense.
-   *
+   * If you haven't already appended an item, you must create a head before using this.
    * Heads can be created manually by both the writer service (the one calling appendItem)
-   * or by the update-privilege-owner of the NFT, since it is a modification on the NFT.
+   * or by the update-privilege-owner (usually the creator) of the NFT, since it is a modification on the NFT.
+   * You'd generally only want to use this api if you're expecting the owner to create the head
+   * (and therefore carry the expense of initializing the PDA the head is stored in.
+   *
+   * If you want to automatically create a head use (@link appendItemCreate) instead.
    */
-  async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {confirmation:{}}){
+  async appendItem(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryAppendItemOptions = {confirmation:{}}){
     //get prev item
     const timestamp = Math.floor(Date.now()/1000)
     const rawItem = solstoryItemInnerToString(item);
@@ -285,14 +280,14 @@ export class SolstoryServerWriterAPI {
    *
    * This method transparently uses ARBundler for high efficiency uploading.
    *
-   * skipInitHeadCheck will crash instead of creating a missing head account. This is useful
-   * because creating a head costs a (small) amount of sol, which a service might not want
-   * to do automatically at its own expense.
+   * It will also automatically create a "head" for the story, taking the funds
+   * required to do so out of the wallet the API was initialized with. If you do not want
+   * this, use (@link appendItem) instead.
    *
    * Heads can be created manually by both the writer service (the one calling appendItem)
-   * or by the update-privilege-owner of the NFT, since it is a modification on the NFT.
+   * or by the update-privilege-owner (usually the creator) of the NFT, since it is a modification on the NFT.
    */
-  async appendItemCreate(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryServerWriterAPI.SolstoryApprendItemOptions = {confirmation:{}}){
+  async appendItemCreate(mintId: PublicKey, item:SolstoryItemInner, options: SolstoryAppendItemOptions = {confirmation:{}}){
     //get prev item
     const timestamp = Math.floor(Date.now()/1000)
     const rawItem = solstoryItemInnerToString(item);
@@ -322,8 +317,8 @@ export class SolstoryServerWriterAPI {
         create = true;
 
         headAct = {
-          currentHash: new Uint8Array(32).fill(0),
-          objId: new Uint8Array(32).fill(0),
+          currentHash: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], //new Uint8Array(32).fill(0),
+          objId: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], //new Uint8Array(32).fill(0),
           accessType: {none:{}}
         };
       }else{
@@ -331,6 +326,10 @@ export class SolstoryServerWriterAPI {
       }
     }
     const newHash = solstoryHash(timestamp, dataHash, headAct.currentHash)
+
+    console.log("head act obj!!", headAct.objId);
+    console.log("head act objtype!!", typeof headAct.objId);
+    console.log("dicktype", Object.prototype.toString.call(headAct.objId));
 
     const fullItem:SolstoryItemContainer = {
       verified: {

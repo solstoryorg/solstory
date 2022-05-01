@@ -5,8 +5,8 @@ use anchor_lang::prelude::*;
 pub enum SolstoryError {
     #[msg("This account already exists")] // This might also be other errors, init defaults to 0x0.
     AccountExists = 1,
-    #[msg("Stated owner does not have update privileges on the given metadata")]
-    InvalidOwnerError = 2,
+    #[msg("Stated creator does not have update privileges on the given metadata")]
+    InvalidCreatorError = 2,
     #[msg("Incorrect Hashcode")]
     HashMismatchError = 3,
     #[msg("TimestampOutOfRange")]

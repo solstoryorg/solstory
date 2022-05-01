@@ -43,6 +43,7 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
         (*ctx.accounts.writer_metadata_pda).description = data.description;
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
+        (*ctx.accounts.writer_metadata_pda).visible =  data.visible;
         (*ctx.accounts.writer_metadata_pda).api_version =  1;
         (*ctx.accounts.writer_metadata_pda).system_validated =  false;
 
@@ -92,11 +93,11 @@ pub mod solstory {
         init_writer_account(&mut ctx.accounts.writer_head_pda, false)
     }
     //pub fn update writer
-    pub fn create_writer_head_owner(ctx: Context<CreateWriterHeadOwner>) -> Result<()> {
+    pub fn create_writer_head_creator(ctx: Context<CreateWriterHeadCreator>) -> Result<()> {
         /*
          * The following things are validated by Anchor.
          *
-         * owner program has signed this call
+         * creator key has signed this call
          * token_mint is a token mint
          * writer_head_pda does not yet exist
          * the writer pda has seed('solstory', token_mint.key, writer_program.key)
@@ -105,12 +106,12 @@ pub mod solstory {
 
         /*
          * The following things we need to validate ourselves:
-         * owner has the rights in the metaplex metadata pdak
+         * creator has the update rights in the metaplex metadata pda
          * TODO: metaplex metadata is for the token mint
          */
 
-        if (*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key) {
-            return Err(SolstoryError::InvalidOwnerError.into())
+        if (*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.creator_program.key) {
+            return Err(SolstoryError::InvalidCreatorError.into())
         }
 
         // Make changes
@@ -143,6 +144,7 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).logo =  data.logo;
         (*ctx.accounts.writer_metadata_pda).description = data.description;
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
+        (*ctx.accounts.writer_metadata_pda).visible =  data.visible;
 
         if data.metadata.len() > 0{
             (*ctx.accounts.writer_metadata_pda).metadata_extended = true;
@@ -159,7 +161,7 @@ pub mod solstory {
         /*
          * The following things are validated by Anchor.
          *
-         * owner program has signed this call
+         * creator program has signed this call
          * token_mint is a token mint
          * the writer pda has seed('solstory', token_mint.key, writer_program.key)
          * the metaplex metadata pda exists
@@ -167,12 +169,12 @@ pub mod solstory {
 
         /*
          * The following things we need to validate ourselves:
-         * owner has the rights in the metaplex metadata pdak
+         * creator has the update rights in the metaplex metadata pda
          * TODO: metaplex metadata is for the token mint
          */
 
-        if (*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key)  {
-            return Err(SolstoryError::InvalidOwnerError.into())
+        if (*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.creator_program.key)  {
+            return Err(SolstoryError::InvalidCreatorError.into())
         }
         (*ctx.accounts.writer_head_pda).authorized = true;
         Ok(())
@@ -182,7 +184,7 @@ pub mod solstory {
         /*
          * The following things are validated by Anchor.
          *
-         * owner program has signed this call
+         * creator program has signed this call
          * token_mint is a token mint
          * the writer pda has seed('solstory', token_mint.key, writer_program.key)
          * the metaplex metadata pda exists
@@ -190,11 +192,11 @@ pub mod solstory {
 
         /*
          * The following things we need to validate ourselves:
-         * owner has the rights in the metaplex metadata pdak
+         * creator has the update rights in the metaplex metadata pda
          * TODO: metaplex metadata is for the token mint
          */
-        if(*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.owner_program.key) {
-            return Err(SolstoryError::InvalidOwnerError.into())
+        if(*ctx.accounts.metaplex_metadata_pda).update_authority != (*ctx.accounts.creator_program.key) {
+            return Err(SolstoryError::InvalidCreatorError.into())
         }
         (*ctx.accounts.writer_head_pda).authorized = false;
         Ok(())
@@ -319,18 +321,18 @@ pub struct CreateWriterHeadWriter<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CreateWriterHeadOwner <'info>{
+pub struct CreateWriterHeadCreator <'info>{
     /// CHECK: This is not an account we read from, it's an address that owns an NFT update auth,
     /// which we verify.
     #[account(mut, signer)]
-    owner_program: AccountInfo<'info>,
+    creator_program: AccountInfo<'info>,
     /// CHECK: This is a generic address for whic program writes to a head, it can be anything.
     writer_program: AccountInfo<'info>,
     #[account()]
     token_mint: Account<'info, Mint>,
     //TODO: potentially add the solstory program key into here to match the metadata pattern
-    // #[account(init, payer=owner_program, seeds = [b"solstory"], bump)]
-    #[account(init, payer=owner_program, space=WRITER_HEAD_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
+    // #[account(init, payer=creator_program, seeds = [b"solstory"], bump)]
+    #[account(init, payer=creator_program, space=WRITER_HEAD_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
     system_program: Program<'info, System>,
@@ -344,6 +346,7 @@ pub struct WriterMetadataData {
     logo: String,
     cdn: String,
     metadata: String,
+    visible: bool,
 }
 
 #[derive(Accounts)]
@@ -366,13 +369,13 @@ pub struct UpdateWriterMetadata<'info> {
 pub struct AuthorizeWriter<'info> {
     /// CHECK: we only use this to get a program id
     #[account(signer)]
-    owner_program: AccountInfo<'info>,
+    creator_program: AccountInfo<'info>,
     /// CHECK: we only use this to get a program id
     writer_program: AccountInfo<'info>,
     #[account()]
     token_mint: Account<'info, Mint>,
     //TODO: potentially add the solstory program key into here to match the metadata pattern
-    // #[account(init, payer=owner_program, seeds = [b"solstory"], bump)]
+    // #[account(init, payer=creator_program, seeds = [b"solstory"], bump)]
     #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
@@ -382,7 +385,7 @@ pub struct AuthorizeWriter<'info> {
 pub struct DeauthorizeWriter<'info> {
     /// CHECK: we only use this to get a program id
     #[account(signer)]
-    owner_program: AccountInfo<'info>,
+    creator_program: AccountInfo<'info>,
     /// CHECK: we only use this to get a program id
     writer_program: AccountInfo<'info>,
     #[account()]

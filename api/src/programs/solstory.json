@@ -114,10 +114,10 @@
       "args": []
     },
     {
-      "name": "createWriterHeadOwner",
+      "name": "createWriterHeadCreator",
       "accounts": [
         {
-          "name": "ownerProgram",
+          "name": "creatorProgram",
           "isMut": true,
           "isSigner": true
         },
@@ -191,7 +191,7 @@
       "name": "authorizeWriter",
       "accounts": [
         {
-          "name": "ownerProgram",
+          "name": "creatorProgram",
           "isMut": false,
           "isSigner": true
         },
@@ -222,7 +222,7 @@
       "name": "deauthorizeWriter",
       "accounts": [
         {
-          "name": "ownerProgram",
+          "name": "creatorProgram",
           "isMut": false,
           "isSigner": true
         },
@@ -575,6 +575,10 @@
           {
             "name": "metadata",
             "type": "string"
+          },
+          {
+            "name": "visible",
+            "type": "bool"
           }
         ]
       }
@@ -662,8 +666,8 @@
     },
     {
       "code": 6002,
-      "name": "InvalidOwnerError",
-      "msg": "Stated owner does not have update privileges on the given metadata"
+      "name": "InvalidCreatorError",
+      "msg": "Stated creator does not have update privileges on the given metadata"
     },
     {
       "code": 6003,
@@ -690,8 +694,5 @@
       "name": "VisibilityIndexAccessError",
       "msg": "Visibility Index Access Violation"
     }
-  ],
-  "metadata": {
-    "address": "storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa"
-  }
+  ]
 }

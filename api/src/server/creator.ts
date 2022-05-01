@@ -6,8 +6,8 @@ import { SolstoryMetadata } from '../common/types';
 import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-metadata";
 
 /*
- * This class is for API calls that you would use as the "owner" of the nft. For Solstory's
- * purpose, owner here represents the entity with UPDATE authority over the NFT, with the
+ * This class is for API calls that you would use as the "creator" of the nft. For Solstory's
+ * purpose, creator here represents the entity with UPDATE authority over the NFT, with the
  * exception of the "visible" flag on the writer head. This is different from the HOLDER of
  * the NFT, who is the entity holding the token.
  *
@@ -15,27 +15,27 @@ import { Metadata as MetaplexMetadata } from "@metaplex-foundation/mpl-token-met
  * a set of writer heads yourself, this is where you would do it.
  *
  * Functions in this class will natively use the wallet the API was initialized with as
- * the owner key.
+ * the creator key.
  */
-export class SolstoryServerOwnerAPI {
+export class SolstoryServerCreatorAPI {
   program: api.SolstoryAPI;
-  ownerKey: PublicKey;
+  creatorKey: PublicKey;
   constructor(anchorProgram: api.SolstoryAPI){
     this.program = anchorProgram;
-    this.ownerKey = this.program.provider.wallet.publicKey;
+    this.creatorKey = this.program.provider.wallet.publicKey;
   }
 
   /*
    * Use this to create an NFT head for your program. Remember to create
    */
-  async createWriterHeadOwner(mintId:PublicKey, writerKey: PublicKey): Promise<string> {
+  async createWriterHeadCreator(mintId:PublicKey, writerKey: PublicKey): Promise<string> {
     const writerHeadPda = await this.program.common.getWriterHeadPda(writerKey, mintId);
     const metaplexPda = await MetaplexMetadata.getPDA(mintId);
 
-    return this.program.rpc.createWriterHeadOwner({
+    return this.program.rpc.createWriterHeadCreator({
       accounts: {
         writerProgram: writerKey,
-        ownerProgram: this.ownerKey,
+        creatorProgram: this.creatorKey,
         tokenMint: mintId,
         writerHeadPda: writerHeadPda,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -52,7 +52,7 @@ export class SolstoryServerOwnerAPI {
     return this.program.rpc.authorizeWriterHead({
         accounts: {
           writerProgram: writerKey,
-          ownerProgram: this.ownerKey,
+          creatorProgram: this.creatorKey,
           tokenMint: mintId,
           writerHeadPda: writerHeadPda,
           metaplexMetadataPda: metaplexPda,
@@ -66,7 +66,7 @@ export class SolstoryServerOwnerAPI {
     return this.program.rpc.deauthorizeWriterHead({
         accounts: {
           writerProgram: writerKey,
-          ownerProgram: this.ownerKey,
+          creatorProgram: this.creatorKey,
           tokenMint: mintId,
           writerHeadPda: writerHeadPda,
           metaplexMetadataPda: metaplexPda,

@@ -1,5 +1,5 @@
 {
-    "entryPoints": ["src/index.ts", "src/client/index.ts", "src/server/index.ts", "src/utils/index.ts", "src/common/index.ts", "src/server/writer.ts", "src/server/owner.ts"],
+    "entryPoints": ["src/index.ts", "src/client/index.ts", "src/server/index.ts", "src/utils/index.ts", "src/common/index.ts", "src/server/writer.ts", "src/server/creator.ts"],
     "entryPointStrategy": "Expand",
     "out": "../docs"
 }

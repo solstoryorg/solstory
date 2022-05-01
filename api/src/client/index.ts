@@ -248,7 +248,7 @@ export class SolstoryClientAPI {
     * One way to get around this and do progressive loading, is to request 1 item and then
     * repeatedly call getAdditionalItems.
     */
-  async getStory(writerKey: PublicKey, mintKey:PublicKey, initialItems:number=10): Promise<SolstoryStory> {
+  async getStory(writerKey: PublicKey, mintKey:PublicKey, initialItems:number=1): Promise<SolstoryStory> {
 
     return this.getHead(writerKey, mintKey).then((head) => {
       return this.getStoryFromHead(head, initialItems);
@@ -271,7 +271,7 @@ export class SolstoryClientAPI {
     * call getAdditionalItems, which will progressively add as many items as requested to
     * the now initialized SolstoryStory.
     */
-  public getStoryFromHead(writer: SolstoryHead, initialItems:number):Promise<SolstoryStory> {
+  public getStoryFromHead(writer: SolstoryHead, initialItems:number=1):Promise<SolstoryStory> {
     // return this.getStory(writer.metadata.writerKey, writer.mintKey, initialItems)
     if(this.program.globalCdn && writer.metadata && writer.metadata.cdn) {
       return axios.get(writer.metadata.cdn+'/nft/', {
@@ -296,6 +296,8 @@ export class SolstoryClientAPI {
       }
     };
 
+    story.loading = true;
+
     return this.getAdditionalItems(story, initialItems)
   }
 
@@ -308,8 +310,13 @@ export class SolstoryClientAPI {
    */
   getAdditionalItems(story: SolstoryStory, numItems:number): Promise<SolstoryStory> {
     //Gate for the end of the chain:
-    if (story.next.objId.toString() == '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+    story.loading = true;
+    console.log("TRYING", story);
+    if (story.next.objId.toString() == '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') {
+      story.loading = false;
+      console.log("reached end2");
       return Promise.resolve(story);
+    }
     //Hit up the CDN here
     if (story.metadata.cdn){
       return axios.get(story.metadata.cdn+'/nft/', {
@@ -319,9 +326,11 @@ export class SolstoryClientAPI {
                          cursor: story.next.cdnCursor
                        }
       }).then((resp) => {
-          //wrong
+          //TODO: properlyimplement CDN
+          console.log("CDN OUT")
           const story = solstoryStoryFromString(resp.data);
           this.verifyStory(story);
+          story.loading = false;
           return story
       });
 
@@ -330,6 +339,7 @@ export class SolstoryClientAPI {
     let retriever:(baseUrl:string, objId:Uint8Array) => Promise<SolstoryItemContainer>;
     retriever = getRetriever(accessType);
 
+    console.log("using retreiver")
 
     return retriever(story.metadata.baseUrl, story.next.objId).then((itemContainer) => {
       // Hexed obj ids used to do matching for "ref" field.
@@ -347,6 +357,7 @@ export class SolstoryClientAPI {
       // The 0,0,0... id represents the end of the hashlist, congrats!
       if (numItems > 1 && (story.next.objId.toString() != '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0'))
         return this.getAdditionalItems(story, numItems-1);
+      story.loading= false;
       return story;
     });
   }

@@ -1,18 +1,21 @@
 import * as api from '../';
-import { SolstoryServerOwnerAPI } from './owner';
+import { SolstoryServerCreatorAPI } from './creator';
 import { SolstoryServerWriterAPI } from './writer';
+// import type { SolstoryServerWriterAPI } from './writer'
 
 
 export class SolstoryServerAPI {
   program: api.SolstoryAPI;
   writer: SolstoryServerWriterAPI;
-  owner: SolstoryServerOwnerAPI;
+  creator: SolstoryServerCreatorAPI;
   constructor(anchorProgram: api.SolstoryAPI){
     this.program = anchorProgram;
     this.writer = new SolstoryServerWriterAPI(anchorProgram)
-    this.owner = new SolstoryServerOwnerAPI(anchorProgram)
+    this.creator = new SolstoryServerCreatorAPI(anchorProgram)
 
   }
 
 }
+
+export { SolstoryAppendItemOptions } from './writer';
 

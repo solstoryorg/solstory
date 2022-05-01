@@ -125,6 +125,7 @@ export type SolstoryItemContainer = {
     nextHash: string;
     timestamp: number; //unix timestamp, not javascript
   }
+  /** Whether the api was able to verify that the data hadn't been tampered with. This being set to false suggests tampering. */
   verifiedSuccess?: boolean,
   hash: string;
   /** This frequently does not exist on creation, only after upload, which means
@@ -138,6 +139,7 @@ export type SolstoryItemContainer = {
 }
 export type SolstoryStory = {
   metadata: SolstoryMetadata,
+  loading?: boolean,
   mintKey: web3.PublicKey,
   headHash: string,
   items: SolstoryItemContainer[],
