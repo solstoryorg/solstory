@@ -40,16 +40,16 @@ describe('solstory creation', () => {
   //create wallets for other tests to consume
   //we do this because we can only mock once
   let mint, mint2;
-  let nftOwnerWallet, nftOwner2Wallet;
+  let nftCreatorWallet, nftCreator2Wallet;
 
   // Configure the client to use the local cluster.
   before(async () => {
     await airdrop(connection, writerKey.publicKey, 3);
     await airdrop(connection, eveWallet.publicKey, 3);
-    nftOwnerWallet = (await getWallet('creation'))[0];
+    nftCreatorWallet = (await getWallet('creation'))[0];
     //pubkey for an NFT program
-    nftOwner2Wallet = (await getWallet('creation'))[0];
-    console.log("creation wallets", nftOwnerWallet.publicKey, nftOwner2Wallet.publicKey);
+    nftCreator2Wallet = (await getWallet('creation'))[0];
+    console.log("creation wallets", nftCreatorWallet.publicKey, nftCreator2Wallet.publicKey);
 
 
     //mint an nft for us to create a writer for
@@ -57,13 +57,13 @@ describe('solstory creation', () => {
       connection,
       maxSupply: 1,
       uri: metaplexMetadataURI,
-      wallet: nftOwnerWallet,
+      wallet: nftCreatorWallet,
     }
 
     const mintResp = await actions.mintNFT(mintNFTArgs);
     mint = mintResp.mint;
 
-    mintNFTArgs.wallet = nftOwner2Wallet
+    mintNFTArgs.wallet = nftCreator2Wallet
     const mint2Resp = await actions.mintNFT(mintNFTArgs);
     mint2 = mint2Resp.mint;
 
@@ -128,7 +128,7 @@ describe('solstory creation', () => {
     const writerMetadataPda = writerMetadataPda;
     const acts = {
         writerProgram: writerWallet.publicKey,
-        ownerProgram: nftOwnerWallet.publicKey,
+        creatorProgram: nftCreatorWallet.publicKey,
         writerMetadataPda: writerMetadataPda,
         systemProgram: anchor.web3.SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -295,7 +295,7 @@ describe('solstory creation', () => {
     });
   });
 
-  it('Is creates a writer head account as the owner', async function () {
+  it('Is creates a writer head account as the creator', async function () {
     const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
@@ -312,7 +312,7 @@ describe('solstory creation', () => {
     const metaplex_pda = await Metadata.getPDA(mint);
     const acts = {
         writerProgram: writerWallet.publicKey,
-        ownerProgram: nftOwnerWallet.publicKey,
+        creatorProgram: nftCreatorWallet.publicKey,
         tokenMint: mint,
         writerHeadPda: writerHeadPda,
         writerMetadataPda: writerMetadataPda,
@@ -321,10 +321,10 @@ describe('solstory creation', () => {
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       }
 
-    const tx = program.rpc.createWriterHeadOwner(
+    const tx = program.rpc.createWriterHeadCreator(
     {
       accounts: acts,
-      signers: [nftOwnerWallet.payer]
+      signers: [nftCreatorWallet.payer]
 
     }
     );
@@ -350,20 +350,17 @@ describe('solstory creation', () => {
 
     const acts = {
         writerProgram: writerWallet.publicKey,
-        ownerProgram: nftOwnerWallet.publicKey,
         tokenMint: mint,
         token: largestAccounts.value[0].address,
         writerHeadPda: writerHeadPda,
         holderKey: largestAccountInfo.value.data.parsed.info.owner,
-        systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: new PublicKey(TOKEN),
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       }
 
     const tx = program.rpc.updateVisibilityIndex(10,
     {
       accounts: acts,
-      signers: [nftOwnerWallet.payer]
+      signers: [nftCreatorWallet.payer]
 
     }
     );
@@ -374,9 +371,9 @@ describe('solstory creation', () => {
   })
   /*
    * This test eve attempts to create an authorized writer by creating the writer
-   * as the owner.
+   * as the creator.
    */
-  it('Fails to create a writer head when not the owner', async function () {
+  it('Fails to create a writer head when not the creator', async function () {
     const [writerHeadPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
@@ -386,7 +383,7 @@ describe('solstory creation', () => {
     const metaplex_pda = await Metadata.getPDA(mint2);
     const acts = {
         writerProgram: eveWallet.publicKey,
-        ownerProgram: nftOwner2Wallet.publicKey,
+        creatorProgram: nftCreator2Wallet.publicKey,
         tokenMint: mint2,
         writerHeadPda: writerHeadPda,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -394,7 +391,7 @@ describe('solstory creation', () => {
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       }
 
-    const tx = program.rpc.createWriterHeadOwner(
+    const tx = program.rpc.createWriterHeadCreator(
     {
       accounts: acts,
       signers: [eveWallet.payer]
@@ -406,7 +403,7 @@ describe('solstory creation', () => {
     return tx.should.be.rejected;
   });
 
-  it('Fails to lie about the owner program', async function () {
+  it('Fails to lie about the creator program', async function () {
     //requires...
     //I create a metaplex mint
     //hmmmm
@@ -420,7 +417,7 @@ describe('solstory creation', () => {
     const metaplex_pda = await Metadata.getPDA(mint2);
     const acts = {
         writerProgram: eveWallet.publicKey,
-        ownerProgram: writerWallet.publicKey,
+        creatorProgram: writerWallet.publicKey,
         tokenMint: mint2,
         writerMetadataPda: writerMetadataPda,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -428,7 +425,7 @@ describe('solstory creation', () => {
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       }
 
-    const tx = program.rpc.createWriterHeadOwner(
+    const tx = program.rpc.createWriterHeadCreator(
     {
       accounts: acts,
       signers: [writerWallet.payer]
@@ -439,7 +436,7 @@ describe('solstory creation', () => {
   });
 
   describe('writer test flow', function() {
-      step('Succeeds in creating a writer head as the not-owner', async function () {
+      step('Succeeds in creating a writer head as the not-creator', async function () {
       const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
         // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
         [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), writerWallet.publicKey.toBuffer()],
@@ -456,7 +453,7 @@ describe('solstory creation', () => {
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
-          ownerProgram: nftOwner2Wallet.publicKey,
+          creatorProgram: nftCreator2Wallet.publicKey,
           tokenMint: mint2,
           writerHeadPda: writerHeadPda,
           writerMetadataPda: writerMetadataPda,
@@ -486,7 +483,7 @@ describe('solstory creation', () => {
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
-          ownerProgram: nftOwner2Wallet.publicKey,
+          creatorProgram: nftCreator2Wallet.publicKey,
           tokenMint: mint2,
           writerHeadPda: writerHeadPda,
           metaplexMetadataPda: metaplex_pda,
@@ -495,7 +492,7 @@ describe('solstory creation', () => {
       const tx = program.rpc.authorizeWriter(
       {
         accounts: acts,
-        signers: [nftOwner2Wallet.payer]
+        signers: [nftCreator2Wallet.payer]
       }
       );
       return tx.then((tx) => {
@@ -518,7 +515,7 @@ describe('solstory creation', () => {
       const metaplex_pda = await Metadata.getPDA(mint2);
       const acts = {
           writerProgram: writerWallet.publicKey,
-          ownerProgram: nftOwner2Wallet.publicKey,
+          creatorProgram: nftCreator2Wallet.publicKey,
           tokenMint: mint2,
           writerHeadPda: writerHeadPda,
           metaplexMetadataPda: metaplex_pda,
@@ -527,7 +524,7 @@ describe('solstory creation', () => {
       const tx = program.rpc.deauthorizeWriter(
       {
         accounts: acts,
-        signers: [nftOwner2Wallet.payer]
+        signers: [nftCreator2Wallet.payer]
       }
       );
       return tx.then(function (tx) {

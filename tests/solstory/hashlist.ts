@@ -42,7 +42,7 @@ describe('solstory hashlist test', async () => {
   const writerWallet2 = new NodeWallet(writerKey2);
 
   let mint;
-  let nftOwnerWallet;
+  let nftCreatorWallet;
 
 
   describe("inner loop to try and keep it from all stopping?", () => {
@@ -51,15 +51,15 @@ describe('solstory hashlist test', async () => {
       console.log('hashlist1', await airdrop(connection, writerKey.publicKey, 3));
       console.log('hashlist3', await airdrop(connection, writerKey2.publicKey, 3));
       console.log('hashlist 2', await airdrop(connection, eveKey.publicKey, 3));
-      nftOwnerWallet = (await getWallet('hashlist'))[0];
-      console.log('hashlist NFT wallet', nftOwnerWallet.publicKey);
+      nftCreatorWallet = (await getWallet('hashlist'))[0];
+      console.log('hashlist NFT wallet', nftCreatorWallet.publicKey);
 
 
       const mintNFTArgs: actions.MintNFTParams = {
         connection,
         maxSupply: 1,
         uri: metaplexMetadataURI,
-        wallet: nftOwnerWallet,
+        wallet: nftCreatorWallet,
       }
 
       const mintResp = await actions.mintNFT(mintNFTArgs);
@@ -94,7 +94,7 @@ describe('solstory hashlist test', async () => {
       const writerMetadataPda = _writerMetadataPda;
       const acts = {
           writerProgram: writerWallet.publicKey,
-          ownerProgram: nftOwnerWallet.publicKey,
+          creatorProgram: nftCreatorWallet.publicKey,
           writerMetadataPda: writerMetadataPda,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -128,7 +128,7 @@ describe('solstory hashlist test', async () => {
       const writerHeadPda = _writerHeadPda;
       const acts2 = {
           writerProgram: writerWallet.publicKey,
-          ownerProgram: nftOwnerWallet.publicKey,
+          creatorProgram: nftCreatorWallet.publicKey,
           tokenMint: mint,
           writerMetadataPda: writerMetadataPda,
           writerHeadPda: writerHeadPda,
@@ -323,7 +323,7 @@ describe('solstory hashlist test', async () => {
       const metaplex_pda = await Metadata.getPDA(mint);
       const acts = {
           writerProgram: writerWallet2.publicKey,
-          ownerProgram: nftOwnerWallet.publicKey,
+          creatorProgram: nftCreatorWallet.publicKey,
           tokenMint: mint,
           writerHeadPda: writerHeadPda,
           writerMetadataPda: writerMetadataPda,

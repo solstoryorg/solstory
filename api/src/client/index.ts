@@ -390,6 +390,45 @@ export class SolstoryClientAPI {
 
       return overall;
     });
+  }
+
+  /*
+   * This updates the visibility index of a story.
+   *
+   * -1 will hide a story
+   * values > 0 will force a story to appear
+   * 0 will treat it as default
+   *
+   * @param index the visibility index to set this solstory to
+   * @param tokenAcct optional param – this is an optimization that lets the api skip token act lookup if you already have it
+   */
+  async updateVisibility(writerKey:PublicKey, mintKey: PublicKey, index:number, tokenAcct?: PublicKey):Promise<string> {
+
+    const writerHeadPda = await this.program.common.getWriterHeadPda(writerKey, mintKey);
+
+    if(tokenAcct == undefined) {
+
+      const largestAccounts = await this.program.provider.connection.getTokenLargestAccounts(new PublicKey(mintKey));
+      tokenAcct = largestAccounts.value[0].address;
+    }
+
+    const acts = {
+      writerProgram: writerKey,
+      tokenMint: mintKey,
+      token: tokenAcct,
+      writerHeadPda: writerHeadPda,
+      holderKey: largestAccountInfo.value.data.parsed.info.owner,
+      tokenProgram: new PublicKey(TOKEN),
+    }
+
+  const tx = this.program.rpc.updateVisibilityIndex(index,
+  {
+    accounts: acts,
+
+  }
+  );
+  // console.dir(tx);
+  return tx;
 
 
   }
