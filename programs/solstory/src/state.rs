@@ -11,7 +11,7 @@ pub const METAPLEX_METADATA_ID:Pubkey = solana_program::pubkey!("metaqbxxUerdq28
 pub const WRITER_METADATA_LEN:usize = 8 +
 32 + //writer key
 1 + //visible
-1 + //system validated
+1 + //system verified
 1 + //api version
 128 + //label
 (192 * 4) + // url, logo, cdn, base_url
@@ -63,9 +63,9 @@ pub struct WriterMetadata {
     // A writer program storing progress information for a video game, for example,
     // might set this to false.
     pub visible: bool, //1
-    // Marks programs that have been validated by solstory org. Protection against
+    // Marks programs that have been verified by solstory org. Protection against
     // spam, phishing, ect.
-    pub system_validated: bool, // 1
+    pub system_verified: bool, // 1
     pub api_version: u8, // 1
 
     //for writer, semi-static

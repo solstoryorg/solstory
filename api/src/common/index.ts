@@ -6,8 +6,6 @@ import bs58 from 'bs58';
 import { getRetriever, simpleHash, solstoryHash } from '../utils'
 import * as api from '../';
 import { SolstoryMetadata,
-  AccessType,
-  VisibilityOverride,
   SolstoryHead,
   SolstoryItemContainer,
   SolstoryStory,
@@ -21,10 +19,8 @@ import { solstoryMetadataFromString,
 
 
 /**
- * This is for common things between the client and server
- * generally concerning data lookup
+ * This is for common things that don't require signing, like data lookups
  */
-
 export class SolstoryCommonAPI {
   program: api.SolstoryAPI;
   constructor(program: api.SolstoryAPI) {
@@ -200,7 +196,6 @@ export class SolstoryCommonAPI {
 
         const solHead:SolstoryHead = {...(head)};
         solHead.metadata = metadata;
-        console.log("solstoryhead", solHead);
         return solHead;
       });
     });
@@ -276,7 +271,7 @@ export class SolstoryCommonAPI {
             outs.push({
               metadata: this.program.metadataCache.metadata[objectsSlice[index].wk],
 
-              writerKey: pdaSlice[i],
+              writerKey: new PublicKey(headPdaPubkeyObjects[i].wk),
               mintKey: mintKey,
               objId: acct.objId,
               authorized: acct.authorized,
@@ -406,10 +401,18 @@ export class SolstoryCommonAPI {
       console.log("story + new item", story, itemContainer);
       const len = story.items.length;
       if(len == 0)
-        itemContainer.verifiedSuccess = this.verifyItem(story.headHash, itemContainer.verified);
-      else
-        itemContainer.verifiedSuccess = story.items[len-1].verifiedSuccess && this.verifyItem(story.items[len-1].verified.nextHash, itemContainer.verified);
+        itemContainer.validationSuccess = this.verifyItem(story.headHash, itemContainer.validated);
+      else {
+        itemContainer.validationSuccess = story.items[len-1].validationSuccess && this.verifyItem(story.items[len-1].validated.nextHash, itemContainer.validated);
 
+        // @ts-ignore boop
+        itemContainer.debugValidation = {
+          curHashLoop: story.items[len-1].validated.nextHash,
+          curOverall: story.items[len-1].validationSuccess,
+          itemV: itemContainer.validated,
+          curSolstoryHash: solstoryHash(itemContainer.validated.timestamp, itemContainer.validated.itemHash, itemContainer.validated.nextHash),
+        }
+      }
       story.items.push(itemContainer);
       story.next = itemContainer.next;
 
@@ -426,9 +429,14 @@ export class SolstoryCommonAPI {
     *
     * If you intend to use this function, please see how it works in {@link getAdditionalItems}.
     */
-  verifyItem(currentHash:string, verified: {itemRaw: string, itemHash:string, nextHash: string, timestamp:number}): boolean {
-    return simpleHash(verified.itemRaw) == verified.itemHash &&
-      Buffer.from(solstoryHash(verified.timestamp, verified.itemHash, verified.nextHash)).toString('hex') == currentHash;
+  verifyItem(currentHash:string, validated: {itemRaw: string, itemHash:string, nextHash: string, timestamp:number}): boolean {
+    console.log("attempting to verify:", validated.itemRaw, validated.itemHash, validated.nextHash, validated.timestamp, simpleHash(validated.itemRaw), solstoryHash(validated.timestamp, validated.itemHash, validated.nextHash));
+    console.log( simpleHash(validated.itemRaw) == validated.itemHash,
+      Buffer.from(solstoryHash(validated.timestamp, validated.itemHash, validated.nextHash)).toString('hex') == currentHash);
+    console.log( simpleHash(validated.itemRaw), validated.itemHash,
+      Buffer.from(solstoryHash(validated.timestamp, validated.itemHash, validated.nextHash)).toString('hex'), currentHash);
+    return simpleHash(validated.itemRaw) == validated.itemHash &&
+      Buffer.from(solstoryHash(validated.timestamp, validated.itemHash, validated.nextHash)).toString('hex') == currentHash;
 
   }
 
@@ -440,11 +448,20 @@ export class SolstoryCommonAPI {
   verifyStory(story:SolstoryStory):Promise<boolean> {
     return this.getHead(story.metadata.writerKey, story.mintKey).then((head) => {
       let overall = true;
+      console.log("Verification Attempt: ", head.currentHash);
       let curHash = head.currentHash;
       for(let i=0; i<story.items.length;i++) {
-        story.items[i].verifiedSuccess = overall && this.verifyItem(curHash, story.items[i].verified)
-        overall = story.items[i].verifiedSuccess as boolean;
-        curHash = story.items[i].verified.nextHash;
+        story.items[i].validationSuccess = overall && this.verifyItem(curHash, story.items[i].validated)
+        overall = story.items[i].validationSuccess as boolean;
+        const v = story.items[i].validated;
+        // @ts-ignore: hahaha
+        story.items[i].debugValidation = {
+          curHashLoop: curHash,
+          curOverall: overall,
+          curSolstoryHash: solstoryHash(v.timestamp, v.itemHash, v.nextHash),
+          validated: v,
+        }
+        curHash = story.items[i].validated.nextHash;
       }
 
       return overall;

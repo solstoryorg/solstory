@@ -7,8 +7,9 @@
 import * as utils from "./utils/index";
 import { isBrowser, isNode } from "browser-or-node";
 import { Program, Idl, Provider, Coder } from '@project-serum/anchor';
-import { SolstoryClientAPI } from './client'
-import { SolstoryServerAPI, SolstoryAppendItemOptions } from './server'
+import { SolstoryWriterAPI, SolstoryAppendItemOptions } from './writer'
+import { SolstoryCreatorAPI } from './creator'
+import { SolstoryHolderAPI } from './holder'
 import { SolstoryCommonAPI } from './common'
 import {
   SolstoryMetadata,
@@ -49,14 +50,23 @@ type MetadataCache = {
 // }
 /**
  * This is the api object. You can treat it just like a regular anchor program object,
- * but it has the additional "client" and "server" namespaces for common client and
- * server tasks.
+ * It has different namespaces depending on which entity's permissions are required,
+ * and will natively treat the public key Solstory was initialized with as the
+ * key of that entity for the sake of signing (since it's currently not
+ * practical to sign with multiple keys in an api that's supposed to work on both
+ * clients AND servers).
+ *
+ * - *holder* contains actions permissible to the holder of the nft
+ * - *writer* contains actions permissible to writer program key
+ * - *creator* contains actions permissible to the creator of the nft
+ * - *common* contains actions common actions that do not require signing, like lookups
  *
  * @noInheritDoc
  */
 class SolstoryAPI extends Program<Idl> {
-  public client: SolstoryClientAPI;
-  public server: SolstoryServerAPI;
+  public holder: SolstoryHolderAPI;
+  public writer: SolstoryWriterAPI;
+  public creator: SolstoryCreatorAPI;
   public common: SolstoryCommonAPI;
   bundlr: Bundlr|WebBundlr|undefined;
   bundlrReady: boolean;
@@ -77,9 +87,10 @@ class SolstoryAPI extends Program<Idl> {
 
     }
 
-    this.client = new SolstoryClientAPI(this);
-    this.server = new SolstoryServerAPI(this);
+    this.holder = new SolstoryHolderAPI(this);
     this.common = new SolstoryCommonAPI(this);
+    this.writer = new SolstoryWriterAPI(this);
+    this.creator = new SolstoryCreatorAPI(this);
 
     this.bundlrReady=false;
 

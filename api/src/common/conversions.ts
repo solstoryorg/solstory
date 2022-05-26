@@ -31,6 +31,7 @@ export function solstoryMetadataFromString(input: string|object):SolstoryMetadat
         'cdn' in input &&
         'baseUrl' in input &&
         'metadata' in input &&
+        'apiVersion' in input &&
         'hasExtendedMetadata' in input))
     throw Error("missing items in json")
   // @ts-ignore we've just verified that writerkey exists
@@ -95,7 +96,7 @@ export function solstoryItemInnerFromString(input:string|object):SolstoryItemInn
   if(!(
     'type' in input &&
     'data' in input))
-    throw Error("Missing keys in stringified head")
+    throw Error("Missing keys in stringified item")
 
   const half = {
     ...input,
@@ -113,11 +114,11 @@ export function solstoryItemInnerFromString(input:string|object):SolstoryItemInn
 export function solstoryItemContainerToString(input:SolstoryItemContainer):string {
   const half = {
     ...input,
-    verified: {
-      itemRaw: input.verified.itemRaw,
-      itemHash: input.verified.itemHash,
-      nextHash: input.verified.nextHash,
-      timestamp: input.verified.timestamp,
+    validated: {
+      itemRaw: input.validated.itemRaw,
+      itemHash: input.validated.itemHash,
+      nextHash: input.validated.nextHash,
+      timestamp: input.validated.timestamp,
     }
 
   };
@@ -129,37 +130,40 @@ export function solstoryItemContainerFromString(input: string|object):SolstoryIt
     input = JSON.parse(input);
   input = input as object
   if(!(
-    'verified' in input &&
+    'validated' in input &&
     // @ts-ignore shorcricuit means this works
-    'itemRaw' in input.verified &&
+    'itemRaw' in input.validated &&
     // @ts-ignore shorcricuit means this works
-    'itemHash' in input.verified &&
+    'itemHash' in input.validated &&
     // @ts-ignore shorcricuit means this works
-    'nextHash' in input.verified &&
+    'nextHash' in input.validated &&
     // @ts-ignore shorcricuit means this works
-    'timestamp' in input.verified &&
+    'timestamp' in input.validated &&
     'hash' in input &&
+    'apiVersion' in input &&
     'next' in input &&
     // @ts-ignore shorcricuit means this works
     'objId' in input.next &&
     // @ts-ignore shorcricuit means this works
     'accessType' in input.next))
-    throw Error("Missing keys in stringified head")
+    throw Error("Missing keys in stringified item container")
 
     const half:SolstoryItemContainer = {
       // @ts-ignore we just verified this
       hash: input.hash,
-      verified: {
+      // @ts-ignore we just verified this
+      apiVersion: input.apiVersion,
+      validated: {
         // @ts-ignore we just verified this
-        itemHash: input.verified.itemHash,
+        itemHash: input.validated.itemHash,
         // @ts-ignore we just verified this
-        nextHash: input.verified.nextHash,
+        nextHash: input.validated.nextHash,
         // @ts-ignore we just verified this
-        timestamp: input.verified.timestamp,
+        timestamp: input.validated.timestamp,
         // @ts-ignore we just verified this
-        itemRaw: input.verified.itemRaw,
+        itemRaw: input.validated.itemRaw,
         // @ts-ignore we just verified this
-        item: solstoryItemInnerFromString(input.verified.itemRaw)
+        item: solstoryItemInnerFromString(input.validated.itemRaw)
       },
       next: {
         // if someone wants to violate standard API by adding extra things here for their service
@@ -207,7 +211,7 @@ export function solstoryStoryFromString(input: string|object): SolstoryStory {
     'accessType' in input.next &&
     //@ts-ignore this is valid because short circuit
     'objId' in input.next))
-    throw Error("Missing keys in stringified head")
+    throw Error("Missing keys in stringified story")
 
   const half = {
     // @ts-ignore we just verified this

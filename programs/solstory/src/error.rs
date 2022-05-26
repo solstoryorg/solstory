@@ -17,4 +17,8 @@ pub enum SolstoryError {
     InvalidAccessTypeError = 6,
     #[msg("Visibility Index Access Violation")]
     VisibilityIndexAccessError = 7,
+    #[msg("Access Violation")]
+    AccessViolationError = 8,
+    #[msg("Not Supported Error")]
+    NotSupportedError = 9,
 }

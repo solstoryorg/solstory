@@ -407,6 +407,37 @@
       "name": "solAppend",
       "accounts": [],
       "args": []
+    },
+    {
+      "name": "setSystemVerified",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "writerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "writerMetadataPda",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "value",
+          "type": "bool"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -440,7 +471,7 @@
             "type": "bool"
           },
           {
-            "name": "systemValidated",
+            "name": "systemVerified",
             "type": "bool"
           },
           {
@@ -693,6 +724,19 @@
       "code": 6007,
       "name": "VisibilityIndexAccessError",
       "msg": "Visibility Index Access Violation"
+    },
+    {
+      "code": 6008,
+      "name": "AccessViolationError",
+      "msg": "Access Violation"
+    },
+    {
+      "code": 6009,
+      "name": "NotSupportedError",
+      "msg": "Not Supported Error"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa"
+  }
 }

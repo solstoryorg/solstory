@@ -1,15 +1,70 @@
 {
-  "name": "solstory-workspace",
-  "private": true,
-  "workspaces": [
-    "api",
-    "app"
-  ],
-  "scripts": {
-    "pre-build": "cp target/idl/solstory.json api/src/programs/solstory.json",
-    "tsc-watch": "yarn run pre-build; tsc --watch"
-  },
-  "resolutions": {
-    "csstype": "3.0.10"
-  }
+    "name": "@solstory/api",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "SolStory API",
+    "private": false,
+    "exports": {
+        ".": {
+            "require": "./api/dist/cjs/index.js",
+            "import": "./api/dist/mjs/index.js",
+            "types": "./api/dist/mjs/index.d.ts"
+        }
+    },
+    "main": "./api/dist/cjs/index.js",
+    "module": "./api/dist/mjs/index.js",
+    "types": "./api/dist/mjs/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "/*": [
+                "./api/dist/mjs/*",
+                "./api/dist/cjs/*"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "ts-mocha -p ./api/tsconfig.json -t 1000000 ./api/tests/**/*.ts",
+        "pre-build": "cp ./target/idl/solstory.json api/src/programs/solstory.json",
+        "clean": "rm -rf dist/*",
+        "build": "yarn run clean; yarn run pre-build; yarn build:esm && yarn build:cjs; yarn run post-build",
+        "build:esm": "tsc -p ./api/tsconfig.json",
+        "build:cjs": "tsc -p ./api/tsconfig-cjs.json",
+        "post-build": "./api/config_dist",
+        "watch": "yarn run pre-build; tsc --watch ./api/tsconfig.json"
+    },
+    "dependencies": {
+        "@bundlr-network/client": "^0.7.1",
+        "@emotion/react": "^11.7.1",
+        "@emotion/styled": "^11.6.0",
+        "@metaplex-foundation/amman": "^0.0.9",
+        "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
+        "@metaplex/js": "^4.11.7",
+        "@mui/material": "^5.4.0",
+        "@project-serum/anchor": "^0.22.0",
+        "@solana/buffer-layout": "^4.0.0",
+        "@types/chai": "^4.3.0",
+        "@types/crypto-js": "^4.1.1",
+        "arweave": "^1.10.23",
+        "axios": "^0.25.0",
+        "browser-or-node": "^2.0.0",
+        "commonjs": "^0.0.1",
+        "crypto": "^1.0.1",
+        "crypto-hash": "^2.0.1",
+        "crypto-js": "^4.1.1",
+        "jssha": "^3.2.0",
+        "sinon": "^12.0.1",
+        "ts-jest": "^27.1.3"
+    },
+    "devDependencies": {
+        "@types/mocha": "^9.0.0",
+        "chai": "^4.3.4",
+        "chai-as-promised": "^7.1.1",
+        "jest": "^27.4.7",
+        "mocha": "^9.2.0",
+        "mocha-steps": "^1.3.0",
+        "ts-mocha": "^9.0.2",
+        "typedoc": "^0.22.13",
+        "typedoc-plugin-no-inherit": "^1.3.1",
+        "typescript": "^4.5.5"
+    }
 }

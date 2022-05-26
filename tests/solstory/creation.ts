@@ -7,6 +7,7 @@ import { NodeWallet, Connection, actions} from '@metaplex/js';
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { airdrop, LOCALHOST } from '@metaplex-foundation/amman';
 import { getWallet } from '../utils/mockMetaplex';
+import { SOLSTORY_FEE_DESTINATION } from '../utils/constants';
 import { step, xstep } from 'mocha-steps';
 
 import axios, { AxiosResponse } from 'axios';
@@ -18,6 +19,7 @@ const metaplexMetadataURI =
 
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
+
 
 const should = chai.should();
 const expect = chai.expect;
@@ -142,7 +144,8 @@ describe('solstory creation', () => {
         logo: "www.example.com",
         url: "www.example.com",
         cdn: "",
-        metadata: ""
+        metadata: "",
+        visible: true
       },
     {
       accounts: acts,
@@ -319,6 +322,7 @@ describe('solstory creation', () => {
         systemProgram: anchor.web3.SystemProgram.programId,
         metaplexMetadataPda: metaplex_pda,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
       }
 
     const tx = program.rpc.createWriterHeadCreator(
@@ -389,6 +393,7 @@ describe('solstory creation', () => {
         systemProgram: anchor.web3.SystemProgram.programId,
         metaplexMetadataPda: metaplex_pda,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
       }
 
     const tx = program.rpc.createWriterHeadCreator(
@@ -404,10 +409,12 @@ describe('solstory creation', () => {
   });
 
   it('Fails to lie about the creator program', async function () {
-    //requires...
-    //I create a metaplex mint
-    //hmmmm
-    //gotta figure out how to do that in JYES
+    const [writerHeadPda, _nonce2] = await PublicKey.findProgramAddress(
+      // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint.toBuffer(), writerWallet.publicKey.toBuffer()],
+      program.programId
+    ); //TODO: library function for this
+
     const [writerMetadataPda, _nonce] = await PublicKey.findProgramAddress(
       // [Buffer.from(anchor.utils.bytes.utf8.encode("solstory"))],
       [Buffer.from(anchor.utils.bytes.utf8.encode("solstory")), mint2.toBuffer(), eveWallet.publicKey.toBuffer()],
@@ -423,6 +430,8 @@ describe('solstory creation', () => {
         systemProgram: anchor.web3.SystemProgram.programId,
         metaplexMetadataPda: metaplex_pda,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        writerHeadPda: writerHeadPda,
+        solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
       }
 
     const tx = program.rpc.createWriterHeadCreator(
@@ -460,6 +469,7 @@ describe('solstory creation', () => {
           systemProgram: anchor.web3.SystemProgram.programId,
           metaplexMetadataPda: metaplex_pda,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
         }
 
       const tx = program.rpc.createWriterHeadWriter(

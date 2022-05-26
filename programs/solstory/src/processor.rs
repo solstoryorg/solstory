@@ -1,11 +1,23 @@
 use anchor_lang::prelude::*;
+use solana_program::system_instruction;
+use solana_program::program::invoke;
 use crate::{ExtAppendData, TIMESTAMP_ACCEPTABLE_VARIANCE};
 use crate::state::*;
 use crate::utils::*;
 use crate::error::*;
 
+// 1/10th of the rent-exemption for 75 bit head account. =0.000141288 SOL
+pub const SOLSTORY_FEE_LAMP:u64 = 141288;
+pub const SOLSTORY_FEE_DESTINATION:Pubkey = solana_program::pubkey!("HMCTmoJuZhPs8zmN693mm2Y2kdav9waFZEZYF23qoxRd");
 
-pub fn init_writer_account(writer_head_pda: &mut Account<WriterHead>, authorized:bool) -> Result <()>{
+
+pub fn init_head_account<'a>(
+        writer_head_pda: &mut Account<WriterHead>,
+        authorized:bool,
+        payer: &AccountInfo<'a>,
+        solstory: &AccountInfo<'a>,
+        system_prog: &Program<'a, System>
+    ) -> Result <()>{
     writer_head_pda.authorized = authorized;
     writer_head_pda.visibility_index = 0;
     writer_head_pda.access_type = AccessType::None;
@@ -14,8 +26,27 @@ pub fn init_writer_account(writer_head_pda: &mut Account<WriterHead>, authorized
     writer_head_pda.obj_id =  [0; 32];
     writer_head_pda.current_hash =  [0; 32];
 
+
+    if solstory.key() != SOLSTORY_FEE_DESTINATION  {
+        return Err(SolstoryError::AccessViolationError.into())
+
+    }
+    let ix = system_instruction::transfer(
+        payer.key,
+        solstory.key,
+        SOLSTORY_FEE_LAMP
+    );
+    invoke(
+        &ix,
+        &[
+            payer.to_account_info(),
+            solstory.to_account_info(),
+            system_prog.to_account_info(),
+        ]
+    )?;
     Ok(())
 }
+
 
 
 /**

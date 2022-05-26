@@ -11,6 +11,7 @@ import * as crypto from 'crypto';
 
 import { timestampToBytes, solstoryHash } from '../../api/src/utils';
 
+export const SOLSTORY_FEE_DESTINATION = new PublicKey('HMCTmoJuZhPs8zmN693mm2Y2kdav9waFZEZYF23qoxRd');
 
 
 

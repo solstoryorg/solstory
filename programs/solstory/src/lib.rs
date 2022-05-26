@@ -5,6 +5,7 @@ pub mod processor;
 
 use anchor_lang::prelude::*;
 use solana_program::pubkey::PUBKEY_BYTES;
+use solana_program::system_instruction;
 use anchor_spl::token;
 use anchor_spl::token::Mint;
 use crate::processor::*;
@@ -21,6 +22,7 @@ declare_id!("storyXpLfG5mZckpXWqKF8F2fQJfj8bCpFvNwHjiHqa");
  * about ordering.
  */
 const TIMESTAMP_ACCEPTABLE_VARIANCE:i64 = 604800_i64;
+const VERIFICATION_AUTHORITY:Pubkey = solana_program::pubkey!("VeRi7PdXamQLz7yjNjt7AA2FB7Wpg9cirUf7wtxLkyF");
 
 // This is calculated to be roughly 5% of rent.
 // const SOLSTORY_HEAD_CREATION_FEE: i64 = 70000_i64;
@@ -45,7 +47,7 @@ pub mod solstory {
         (*ctx.accounts.writer_metadata_pda).cdn =  data.cdn;
         (*ctx.accounts.writer_metadata_pda).visible =  data.visible;
         (*ctx.accounts.writer_metadata_pda).api_version =  1;
-        (*ctx.accounts.writer_metadata_pda).system_validated =  false;
+        (*ctx.accounts.writer_metadata_pda).system_verified =  false;
 
         if data.metadata.len() > 0{
             (*ctx.accounts.writer_metadata_pda).metadata_extended = true;
@@ -53,13 +55,17 @@ pub mod solstory {
             (*ctx.accounts.writer_metadata_pda).metadata_extended = true;
         }
         (*ctx.accounts.writer_metadata_pda).metadata =  data.metadata;
-        (*ctx.accounts.solstory_pda).writers += 1;
+        if((*ctx.accounts.solstory_pda).writers < std::i32::MAX) {
+            (*ctx.accounts.solstory_pda).writers += 1;
+        }
 
         Ok(())
     }
 
     pub fn delete_writer_metadata(ctx: Context<DeleteWriterMetadata>) -> Result<()> {
-        (*ctx.accounts.solstory_pda).writers -= 1;
+        if((*ctx.accounts.solstory_pda).writers > 0) {
+            (*ctx.accounts.solstory_pda).writers -= 1;
+        }
 
         Ok(())
 
@@ -90,7 +96,7 @@ pub mod solstory {
          */
         // (*ctx.accounts.writer_head_pda).writer_key = *ctx.accounts.writer_program.key;
 
-        init_writer_account(&mut ctx.accounts.writer_head_pda, false)
+        init_head_account(&mut ctx.accounts.writer_head_pda, false, &ctx.accounts.writer_program, &ctx.accounts.solstory_fee_destination, &ctx.accounts.system_program)
     }
     //pub fn update writer
     pub fn create_writer_head_creator(ctx: Context<CreateWriterHeadCreator>) -> Result<()> {
@@ -115,8 +121,7 @@ pub mod solstory {
         }
 
         // Make changes
-
-        init_writer_account(&mut ctx.accounts.writer_head_pda, true)
+        init_head_account(&mut ctx.accounts.writer_head_pda, false, &ctx.accounts.creator_program, &ctx.accounts.solstory_fee_destination, &ctx.accounts.system_program)
     }
 
     /*
@@ -208,7 +213,8 @@ pub mod solstory {
          *
          */
         // Security wise this is a writer-create + an ext append.
-        init_writer_account(&mut ctx.accounts.writer_head_pda, false)?;
+        system_instruction::transfer(ctx.accounts.writer_program.key, &SOLSTORY_FEE_DESTINATION, SOLSTORY_FEE_LAMP);
+        init_head_account(&mut ctx.accounts.writer_head_pda, false, &ctx.accounts.writer_program, &ctx.accounts.solstory_fee_destination, &ctx.accounts.system_program)?;
         append_data_to_writer(&mut ctx.accounts.writer_head_pda, data)
     }
 
@@ -267,6 +273,15 @@ pub mod solstory {
     }
     pub fn sol_append(ctx: Context<SolAppend>) -> Result<()> {
         // not supported in v1
+        Err(SolstoryError::NotSupportedError.into())
+        // Ok(())
+    }
+
+    pub fn set_system_verified(ctx: Context<SetSystemVerified>, value: bool)->Result<()> {
+        if ctx.accounts.authority.key() != VERIFICATION_AUTHORITY {
+            return Err(SolstoryError::AccessViolationError.into())
+        }
+        (*ctx.accounts.writer_metadata_pda).system_verified = value;
         Ok(())
     }
 }
@@ -318,6 +333,9 @@ pub struct CreateWriterHeadWriter<'info> {
     system_program: Program<'info, System>,
     //'metadata' metaplex_program_id, mint_id]
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
+    /// CHECK: we don't read this account
+    #[account(mut, address=crate::processor::SOLSTORY_FEE_DESTINATION @ SolstoryError::AccessViolationError)]
+    solstory_fee_destination: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -336,6 +354,9 @@ pub struct CreateWriterHeadCreator <'info>{
     writer_head_pda: Account<'info, WriterHead>,
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
     system_program: Program<'info, System>,
+    /// CHECK: we don't read this account
+    #[account(mut, address=crate::processor::SOLSTORY_FEE_DESTINATION @ SolstoryError::AccessViolationError)]
+    solstory_fee_destination: AccountInfo<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -461,12 +482,30 @@ pub struct CreateAndAppend<'info> {
     writer_program: AccountInfo<'info>,
     #[account()]
     token_mint: Account<'info, Mint>,
+    /// CHECK: we don't read this account
+    #[account(mut, address=crate::processor::SOLSTORY_FEE_DESTINATION @ SolstoryError::AccessViolationError)]
+    solstory_fee_destination: AccountInfo<'info>,
     // 'solstory' solstory prog, mintid, writer_program
     #[account(init, payer=writer_program, space=WRITER_HEAD_LEN, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
     writer_head_pda: Account<'info, WriterHead>,
     system_program: Program<'info, System>,
     //'metadata' metaplex_program_id, mint_id]
     metaplex_metadata_pda: Account<'info, MetaplexMetadata>,
+}
+
+#[derive(Accounts)]
+pub struct SetSystemVerified<'info> {
+    /// CHECK: we don't look into this accont
+    #[account(mut, signer)]
+    authority: AccountInfo<'info>,
+    #[account()]
+    /// CHECK: we don't look into this account
+    writer_program: AccountInfo<'info>,
+    #[account()]
+    token_mint: Account<'info, Mint>,
+    #[account(mut, seeds = [b"solstory", token_mint.key().as_ref(), writer_program.key().as_ref()], bump)]
+    writer_metadata_pda: Account<'info, WriterMetadata>,
+
 }
 
 #[derive(Accounts)]

@@ -7,6 +7,7 @@ import { airdrop, LOCALHOST } from '@metaplex-foundation/amman';
 import { NodeWallet, Connection, actions} from '@metaplex/js';
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { getWallet } from '../utils/mockMetaplex';
+import { SOLSTORY_FEE_DESTINATION } from '../utils/constants';
 import { step, xstep } from 'mocha-steps';
 import * as crypto from 'crypto';
 
@@ -135,6 +136,7 @@ describe('solstory hashlist test', async () => {
           systemProgram: anchor.web3.SystemProgram.programId,
           metaplexMetadataPda: metaplex_pda,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
         }
 
       return program.rpc.createWriterHeadWriter(
@@ -330,6 +332,7 @@ describe('solstory hashlist test', async () => {
           systemProgram: anchor.web3.SystemProgram.programId,
           metaplexMetadataPda: metaplex_pda,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          solstoryFeeDestination: SOLSTORY_FEE_DESTINATION,
         }
 
       const fakeData = {
@@ -357,6 +360,7 @@ describe('solstory hashlist test', async () => {
         dataHash: dataHash,
         nextHash: oldHash,
         newHash: newHash,
+        currentHash: Uint8Array.from(Buffer.from("0000000000000000000000000000000000000000000000000000000000000000", "hex")),
         objId: Uint8Array.from(Buffer.from("1111111180081351111111111111111111111111111111111111111111111111", "hex")),
         accessType: {ardrive:{}},
       }

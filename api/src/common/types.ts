@@ -1,6 +1,8 @@
 import type anchor from '@project-serum/anchor';
 import type web3 from '@solana/web3.js';
 
+export const API_VERSION = 1;
+
 export type SolstoryMetadata = {
   writerKey: web3.PublicKey;
   /** Title used when displaying this writer. */
@@ -17,7 +19,7 @@ export type SolstoryMetadata = {
   /** Whether this writer is meant to be visible. Set to false for internal programs. */
   visible: boolean,
   /** Whether this writer has been validated by solstory. Meant for fraud and spam protection.*/
-  systemValidated?: boolean,
+  systemVerified?: boolean,
   apiVersion: number,
 
   /** Additional metadata, JSON format. */
@@ -114,7 +116,7 @@ export type SolstoryItemInner = {
  */
 export type SolstoryItemContainer = {
   /** The JSON of this section is what should be validated by the hash.*/
-  verified: {
+  validated: {
     /** JSON doesn't naturally preserve order, so it's important we pick one stringified
      * representation and then stick with it. Since there's a single source of truth this
      * just means we need to save the original `JSON.stringify` when the item is created.
@@ -126,8 +128,9 @@ export type SolstoryItemContainer = {
     timestamp: number; //unix timestamp, not javascript
   }
   /** Whether the api was able to verify that the data hadn't been tampered with. This being set to false suggests tampering. */
-  verifiedSuccess?: boolean,
+  validationSuccess?: boolean,
   hash: string;
+  apiVersion: number;
   /** This frequently does not exist on creation, only after upload, which means
    * it is _not_ a mandatory component when instiating a new item. */
   objId?: string; //This doesn't exist on creation, but should exist on loading.
